@@ -1,0 +1,18 @@
+{
+  "name": "YKS Pro",
+  "tagline": "Everything, unlocked.",
+  "priceMonthly": 7,
+  "priceYearly": 49,
+  "currency": "USD",
+  "checkoutMonthly": "",
+  "checkoutYearly": "",
+  "features": [
+    "High-resolution, print-ready versions of every guide, calendar & tracker",
+    "Editable source files (Canva & Notion) where available",
+    "The full, extended premium guides — not the free summaries",
+    "Exclusive Pro-only drops every month",
+    "Unlimited downloads, forever — no per-item checkout",
+    "Early access to new tools and templates"
+  ],
+  "guarantee": "30-day money-back guarantee. Cancel anytime."
+}

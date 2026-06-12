@@ -1,0 +1,90 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../config/site';
+
+const faqs = [
+  {
+    q: "Is the content really free?",
+    a: "Yes. Most of the library — guides, calendars and trackers — is free to download instantly, with no signup required. A small set of curated premium packs adds exclusive material and funds the work.",
+  },
+  {
+    q: "What format are the printables in?",
+    a: "Every download is a high-resolution PDF designed to print cleanly at home or at a print shop, and to look great on screen if you prefer to stay digital.",
+  },
+  {
+    q: "How do I get a free download?",
+    a: "Open any free guide and click the download button — the PDF downloads immediately, no email or account needed.",
+  },
+  {
+    q: "How are premium packs delivered?",
+    a: "After checkout you'll receive an email with a secure download link within seconds. You can re-download anytime from that link.",
+  },
+  {
+    q: "What's your refund policy?",
+    a: "Premium packs are backed by a 30-day money-back guarantee. If a pack isn't useful to you, email us within 30 days for a full refund — see the Refund Policy for details.",
+  },
+  {
+    q: "Can I use these for my business or clients?",
+    a: "Downloads are licensed for your personal and internal business use. You may not resell, redistribute or repackage the files. If you need a team or commercial license, get in touch.",
+  },
+  {
+    q: "Do free guides get updated?",
+    a: "Yes — we revise guides as things change, and updates are free. Join the weekly email to hear when something you downloaded gets a refresh.",
+  },
+  {
+    q: "I need help or have a question that isn't here.",
+    a: `Email us at ${SITE.email} and we'll get back to you. We're a small team and we actually read every message.`,
+  },
+];
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+};
+---
+
+<BaseLayout
+  title="FAQ — Frequently Asked Questions"
+  description="How downloads work, what formats you get, refunds, licensing and how to reach us."
+  canonical="/faq"
+>
+  <section class="max-w-3xl mx-auto px-6 pt-16 pb-24">
+    <div class="eyebrow mb-3">Help</div>
+    <h1 class="text-4xl md:text-5xl mb-4">Frequently asked questions</h1>
+    <p class="text-text-muted leading-relaxed mb-10">
+      Everything about downloads, formats, refunds and licensing. Still stuck?
+      <a href="/contact" class="text-primary underline underline-offset-4">Contact us</a>.
+    </p>
+
+    <div class="space-y-2" x-data="{ open: 0 }">
+      {faqs.map((faq, idx) => (
+        <div class="surface-card overflow-hidden">
+          <button
+            @click={`open = open === ${idx} ? null : ${idx}`}
+            class="faq-question w-full text-left px-6 py-5 flex justify-between items-center gap-4 font-medium"
+            :aria-expanded={`open === ${idx}`}
+          >
+            <span>{faq.q}</span>
+            <span class="text-primary text-2xl leading-none transition-transform" :class={`{ 'rotate-45': open === ${idx} }`}>+</span>
+          </button>
+          <div class="faq-answer px-6" :class={`{ 'open': open === ${idx} }`}>
+            <div class="pb-6 pt-1 text-text-muted leading-relaxed">{faq.a}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <div class="mt-12 surface-card p-8 text-center">
+      <h2 class="text-2xl mb-2">Still have a question?</h2>
+      <p class="text-text-muted mb-6">We're happy to help — usually within a day.</p>
+      <a href="/contact" class="btn btn-primary px-8 py-3.5">Get in touch</a>
+    </div>
+  </section>
+
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+</BaseLayout>

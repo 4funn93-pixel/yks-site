@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" role="img" aria-label="Daily habit tracker">
+  <rect width="600" height="450" fill="#0e0e11"/>
+  <g stroke="#1c1c21" stroke-width="1">
+    <path d="M0 90H600M0 180H600M0 270H600M0 360H600"/>
+  </g>
+  <text x="48" y="70" fill="#71717a" font-family="monospace" font-size="15" letter-spacing="4">DAILY HABITS</text>
+  <!-- habit grid: rows of day cells, some completed in lime -->
+  <g>
+    <!-- row 1 (mostly done) -->
+    <g transform="translate(48,118)">
+      <rect width="44" height="44" rx="10" fill="#c7f73e"/>
+      <path d="M14 22l7 7 12-14" stroke="#0e0e11" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <g transform="translate(110,118)"><rect width="44" height="44" rx="10" fill="#c7f73e"/><path d="M14 22l7 7 12-14" stroke="#0e0e11" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <g transform="translate(172,118)"><rect width="44" height="44" rx="10" fill="#c7f73e"/><path d="M14 22l7 7 12-14" stroke="#0e0e11" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <rect x="234" y="118" width="44" height="44" rx="10" fill="none" stroke="#2e2e33" stroke-width="2"/>
+    <g transform="translate(296,118)"><rect width="44" height="44" rx="10" fill="#c7f73e"/><path d="M14 22l7 7 12-14" stroke="#0e0e11" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <rect x="358" y="118" width="44" height="44" rx="10" fill="none" stroke="#2e2e33" stroke-width="2"/>
+    <g transform="translate(420,118)"><rect width="44" height="44" rx="10" fill="#c7f73e"/><path d="M14 22l7 7 12-14" stroke="#0e0e11" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <rect x="482" y="118" width="44" height="44" rx="10" fill="none" stroke="#2e2e33" stroke-width="2"/>
+    <!-- row 2 -->
+    <g transform="translate(48,180)"><rect width="44" height="44" rx="10" fill="#c7f73e"/><path d="M14 22l7 7 12-14" stroke="#0e0e11" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <rect x="110" y="180" width="44" height="44" rx="10" fill="none" stroke="#2e2e33" stroke-width="2"/>
+    <g transform="translate(172,180)"><rect width="44" height="44" rx="10" fill="#c7f73e"/><path d="M14 22l7 7 12-14" stroke="#0e0e11" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <g transform="translate(234,180)"><rect width="44" height="44" rx="10" fill="#c7f73e"/><path d="M14 22l7 7 12-14" stroke="#0e0e11" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <rect x="296" y="180" width="44" height="44" rx="10" fill="none" stroke="#2e2e33" stroke-width="2"/>
+    <g transform="translate(358,180)"><rect width="44" height="44" rx="10" fill="#c7f73e"/><path d="M14 22l7 7 12-14" stroke="#0e0e11" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <g transform="translate(420,180)"><rect width="44" height="44" rx="10" fill="#c7f73e"/><path d="M14 22l7 7 12-14" stroke="#0e0e11" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <rect x="482" y="180" width="44" height="44" rx="10" fill="none" stroke="#2e2e33" stroke-width="2"/>
+  </g>
+  <!-- streak line -->
+  <text x="48" y="300" fill="#f4f4f5" font-family="monospace" font-size="13" letter-spacing="2">STREAK</text>
+  <rect x="48" y="316" width="478" height="10" rx="5" fill="#1a1a1f"/>
+  <rect x="48" y="316" width="360" height="10" rx="5" fill="#c7f73e"/>
+  <text x="48" y="392" fill="#a1a1aa" font-family="sans-serif" font-size="26" font-weight="700">Daily Habit Tracker</text>
+</svg>

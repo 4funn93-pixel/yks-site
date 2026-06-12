@@ -1,0 +1,44 @@
+---
+/**
+ * Blog Index — Content hub for SEO traffic + funnel to guides
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { SITE } from '../../config/site';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime());
+
+const title = "The Blog | YKS";
+const description = "Practical writing on habits, focus and planning — how to build routines that stick, plan on paper, and pick systems you'll actually keep using.";
+---
+
+<BaseLayout title={title} description={description} canonical="/blog">
+  <div class="max-w-5xl mx-auto px-6 pt-16 pb-24">
+    <div class="max-w-2xl mb-12">
+      <div class="eyebrow mb-3">The blog</div>
+      <h1 class="text-5xl md:text-6xl">Habits, focus &amp; planning</h1>
+      <p class="mt-4 text-lg text-text-muted leading-relaxed">Practical, no-fluff writing on building routines that stick and staying focused — paired with our free printables.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      {posts.map(post => (
+        <a href={`/blog/${post.data.slug}`} class="blog-card p-8 group">
+          <div class="uppercase text-xs tracking-[1.5px] text-primary mb-3">{post.data.category}</div>
+          <h2 class="font-semibold text-2xl tracking-tight mb-4 group-hover:text-primary transition line-clamp-3">{post.data.title}</h2>
+          <p class="text-text-muted mb-6 line-clamp-3">{post.data.description}</p>
+          <div class="flex items-center justify-between text-sm text-text-subtle">
+            <div>{post.data.author} · {post.data.readingTime}</div>
+            <div class="text-primary group-hover:underline">Read →</div>
+          </div>
+        </a>
+      ))}
+    </div>
+
+    {SITE.social.x && (
+      <div class="mt-16 text-center text-sm text-text-muted">
+        New posts published regularly. Follow on <a href={SITE.social.x} class="text-primary underline">X</a> for early access.
+      </div>
+    )}
+  </div>
+</BaseLayout>

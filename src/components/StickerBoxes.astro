@@ -1,0 +1,507 @@
+---
+/**
+ * StickerBoxes — weekly sticker drop (homepage).
+ * Pick ONE of three mystery boxes → it reveals a randomized set of 5 stickers,
+ * then a 7-day cooldown locks the drop (persisted in localStorage with a live
+ * countdown). Powered by Alpine.js. Respects prefers-reduced-motion.
+ */
+
+import Mascot from './Mascot.astro';
+
+const iconPaths: Record<string, string> = {
+  check: '<path d="M5 12.5l4 4 9.5-9.5"/>',
+  flame: '<path d="M12 3c1.5 2.5-1.5 4-1.5 6.5a3.5 3.5 0 007 0c0-1.5-.7-2.6-.7-4 1.7 1 2.7 2.8 2.7 5.5a7.5 7.5 0 11-15 0c0-4 3.5-6 4.5-9z"/>',
+  star: '<path d="M12 4l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 16.9 7.2 18.9l.9-5.4L4.2 9.7l5.4-.8z"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  target: '<circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3"/>',
+  coffee: '<path d="M5 8.5h11v4.5a4 4 0 01-4 4H9a4 4 0 01-4-4z"/><path d="M16 9.5h2a2 2 0 110 4h-2"/>',
+  bulb: '<path d="M9.5 18h5M10.5 21h3M12 3a6 6 0 00-3.8 10.6c.8.7.8 1.6.8 2.4h6c0-.8 0-1.7.8-2.4A6 6 0 0012 3z"/>',
+  leaf: '<path d="M5 19C5 11 11 5 19 5c0 8-6 14-14 14z"/><path d="M9 15c2-3 5-5 8-6"/>',
+  moon: '<path d="M20 13.5A8 8 0 1110.5 4a6.5 6.5 0 009.5 9.5z"/>',
+  reset: '<path d="M4.5 12a7.5 7.5 0 107.5-7.5A7.5 7.5 0 006 6.6"/><path d="M5.5 3.5v4h4"/>',
+  heart: '<path d="M12 20s-7-4.5-7-9.2A3.8 3.8 0 0112 8a3.8 3.8 0 017-2.2c0 4.7-7 9.2-7 9.2z"/>',
+  smile: '<circle cx="12" cy="12" r="8.2"/><path d="M9 10.5h.01M15 10.5h.01M8.5 14.5a4 4 0 007 0"/>',
+};
+
+// Full pool the random drop draws from.
+const pool = [
+  { icon: 'check', label: 'DONE', c: '#c7f73e' },
+  { icon: 'flame', label: 'STREAK', c: '#fb7185' },
+  { icon: 'star', label: 'WIN', c: '#fbbf24' },
+  { icon: 'plus', label: '+1', c: '#34d399' },
+  { icon: 'heart', label: 'YES', c: '#a78bfa' },
+  { icon: 'target', label: 'FOCUS', c: '#38bdf8' },
+  { icon: 'coffee', label: 'FUEL', c: '#fbbf24' },
+  { icon: 'bulb', label: 'IDEA', c: '#c7f73e' },
+  { icon: 'smile', label: 'FLOW', c: '#34d399' },
+  { icon: 'leaf', label: 'BREATHE', c: '#34d399' },
+  { icon: 'moon', label: 'REST', c: '#a78bfa' },
+  { icon: 'reset', label: 'RESET', c: '#38bdf8' },
+];
+
+// Fan-out positions for the 5 revealed stickers.
+const fan = [
+  { tx: -120, ty: -52, rot: -16 },
+  { tx: -62, ty: -98, rot: -8 },
+  { tx: 0, ty: -120, rot: 0 },
+  { tx: 62, ty: -98, rot: 8 },
+  { tx: 120, ty: -52, rot: 16 },
+];
+
+const boxes = [0, 1, 2];
+const cooldownDays = 7;
+---
+
+<!-- icon symbol defs (referenced by the revealed stickers) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    {Object.entries(iconPaths).map(([k, p]) => (
+      <symbol id={`st-${k}`} viewBox="0 0 24 24"><Fragment set:html={p} /></symbol>
+    ))}
+  </defs>
+</svg>
+
+<section
+  class="relative overflow-hidden border-y border-border bg-bg-elevated py-20"
+  x-data="stickerDrop"
+>
+  <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-[700px] h-[360px] glow-accent pointer-events-none"></div>
+  <div class="relative max-w-6xl mx-auto px-6">
+    <div class="text-center mb-10">
+      <Mascot pose="wink" class="w-12 h-12 mx-auto mb-3 text-primary" title="Sprout with this week's drop" />
+      <div class="eyebrow mb-3">Weekly sticker drop</div>
+      <h2 class="text-3xl md:text-4xl">Pick one box</h2>
+      <p class="text-text-muted leading-relaxed mt-3 max-w-md mx-auto" x-show="!locked" x-cloak>
+        One free pick a week. Choose a mystery box and see what you pull.
+      </p>
+      <p class="text-text-muted leading-relaxed mt-3 max-w-md mx-auto" x-show="locked" x-cloak>
+        You've opened this week's box. Next drop in
+        <span class="text-primary font-medium" x-text="remaining"></span>.
+      </p>
+    </div>
+
+    <div class="grid sm:grid-cols-3 gap-4">
+      {boxes.map((n) => (
+        <div
+          class="giftwrap"
+          :class={`{ 'is-open': popped && chosen === ${n}, 'is-dimmed': chosen !== null && chosen !== ${n} }`}
+        >
+          <div class="stickers" aria-hidden="true">
+            <template x-for={`(s, idx) in (chosen === ${n} ? revealed : [])`} :key="idx">
+              <span class="sticker" :style="stickerStyle(idx, s)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#101012" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use :href="'#st-' + s.icon"></use></svg>
+                <span class="sticker-label" x-text="s.label"></span>
+              </span>
+            </template>
+          </div>
+
+          <button
+            type="button"
+            class="gift"
+            @click={`pick(${n})`}
+            :disabled={`locked && chosen !== ${n}`}
+            :aria-expanded={`chosen === ${n}`}
+            :aria-label={`chosen === ${n} ? 'Opened box' : (locked ? 'Locked until next week' : 'Open mystery box ${n + 1}')`}
+          >
+            <span class="sparks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+            <span class="gift-lid">
+              <svg class="bow" viewBox="0 0 40 24" aria-hidden="true">
+                <ellipse cx="13" cy="11" rx="9" ry="7" fill="#9fe838"/>
+                <ellipse cx="27" cy="11" rx="9" ry="7" fill="#9fe838"/>
+                <circle cx="20" cy="11" r="5.5" fill="#d6ff63"/>
+              </svg>
+            </span>
+            <span class="gift-body"><span class="qmark" :class={`{ 'hide': chosen === ${n} }`}>?</span></span>
+            <span class="lock" x-show={`locked && chosen !== ${n}`} x-cloak aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+            </span>
+          </button>
+
+          <div class="text-center mt-4 min-h-[64px]">
+            <template x-if={`chosen === ${n}`}>
+              <div>
+                <div class="font-display font-semibold text-lg tracking-tight">Nice pull! 🎉</div>
+                <a href="/downloads/stickers-collection.pdf" download class="btn btn-primary text-sm py-2.5 px-5 mt-2">Download sticker sheet</a>
+                <p class="font-mono text-[10px] tracking-wide text-text-subtle mt-2 uppercase">5 stickers · print &amp; cut</p>
+              </div>
+            </template>
+            <template x-if={`chosen !== ${n}`}>
+              <div>
+                <div class="font-display font-semibold text-lg tracking-tight">Mystery box</div>
+                <p class="text-sm text-text-subtle mt-0.5" x-text="locked ? 'Locked' : 'Tap to open'"></p>
+              </div>
+            </template>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- ===== COLLECTION + STREAK + CAPTURE (the loop) ===== -->
+    <div class="mt-16 grid lg:grid-cols-[1.4fr_1fr] gap-5">
+      <!-- Collection wall -->
+      <div class="surface-card p-7">
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <div class="eyebrow mb-1.5">Your collection</div>
+            <h3 class="font-display font-semibold text-lg tracking-tight">
+              <span class="text-primary tabular-nums" x-text="collectedCount"></span><span class="text-text-subtle">/<span x-text="pool.length"></span> stickers</span>
+            </h3>
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-bg" x-show="streak > 0" x-cloak>
+            <span aria-hidden="true">🔥</span>
+            <span class="font-display font-bold text-sm tabular-nums" x-text="streak"></span>
+            <span class="font-mono text-[10px] tracking-wider uppercase text-text-subtle" x-text="streak === 1 ? 'week' : 'weeks'"></span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-6 sm:grid-cols-8 lg:grid-cols-6 gap-2.5">
+          <template x-for="s in pool" :key="s.label">
+            <div
+              class="aspect-square rounded-xl border flex flex-col items-center justify-center gap-0.5 transition-all"
+              :class="collection[s.label] ? 'border-transparent' : 'border-border opacity-35 grayscale'"
+              :style="collection[s.label] ? ('background:' + s.c) : 'background:var(--color-bg)'"
+              :title="collection[s.label] ? (s.label + ' ×' + collection[s.label]) : 'Not collected yet'"
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" :stroke="collection[s.label] ? '#101012' : 'currentColor'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="!collection[s.label] && 'text-text-subtle'"><use :href="'#st-' + s.icon"></use></svg>
+              <span class="font-mono text-[7px] font-bold tracking-tight" :class="collection[s.label] ? 'text-[#101012]' : 'text-text-subtle'" x-text="s.label"></span>
+              <span x-show="collection[s.label] > 1" class="font-mono text-[7px] text-[#101012]/70" x-text="'×' + collection[s.label]" x-cloak></span>
+            </div>
+          </template>
+        </div>
+
+        <!-- complete-the-set milestone nudge -->
+        <div x-show="collectedCount >= pool.length" x-cloak class="mt-5 flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/[0.06] px-4 py-3">
+          <span class="text-lg" aria-hidden="true">🏆</span>
+          <p class="text-sm text-text-muted flex-1">Full set, collector. Ready for the printable <strong class="text-text">sticker + tracker pack</strong>?</p>
+          <a href="/bundles" class="btn btn-primary text-xs py-2 px-4 shrink-0">See packs</a>
+        </div>
+      </div>
+
+      <!-- Email capture -->
+      <div class="surface-card p-7 flex flex-col">
+        <div class="eyebrow mb-1.5">Never miss a drop</div>
+        <h3 class="font-display font-semibold text-lg tracking-tight mb-2">Get pinged when the box resets</h3>
+        <p class="text-sm text-text-muted leading-relaxed mb-5">One email a week when a fresh box is ready — plus new printables as they land. No spam, unsubscribe anytime.</p>
+
+        <form
+          name="sticker-drop"
+          method="POST"
+          data-netlify="true"
+          data-netlify-honeypot="bot-field"
+          @submit.prevent="subscribe($event)"
+          class="mt-auto"
+          x-show="!subscribed"
+        >
+          <input type="hidden" name="form-name" value="sticker-drop" />
+          <p class="hidden"><label>Leave empty: <input name="bot-field" /></label></p>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input
+              type="email" name="email" required placeholder="you@email.com"
+              class="flex-1 bg-bg border border-border focus:border-primary rounded-full px-5 py-2.5 text-sm placeholder:text-text-subtle outline-none transition-colors"
+            />
+            <button type="submit" class="btn btn-primary text-sm px-5 py-2.5 whitespace-nowrap">Notify me</button>
+          </div>
+        </form>
+        <div x-show="subscribed" x-cloak class="mt-auto flex items-center gap-2.5 rounded-xl border border-primary/30 bg-primary/[0.06] px-4 py-3 text-sm">
+          <span aria-hidden="true">✅</span>
+          <span class="text-text-muted">You're on the list. See you at the next drop.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script define:vars={{ pool, fan, cooldownDays }}>
+  document.addEventListener('alpine:init', () => {
+    window.Alpine.data('stickerDrop', () => ({
+      pool,
+      fan,
+      cooldownMs: cooldownDays * 86400000,
+      KEY: 'yks:sticker-drop',
+      chosen: null,
+      revealed: [],
+      popped: false,
+      locked: false,
+      claimedAt: 0,
+      remaining: '',
+      _timer: null,
+      // ---- the loop: persistent collection + streak + capture ----
+      collection: {},
+      streak: 0,
+      subscribed: false,
+
+      init() {
+        try {
+          const raw = localStorage.getItem(this.KEY);
+          if (raw) {
+            const d = JSON.parse(raw);
+            this.collection = d.collection || {};
+            this.streak = d.streak || 0;
+            this.subscribed = !!d.subscribed;
+            if (d && d.claimedAt && Date.now() - d.claimedAt < this.cooldownMs) {
+              this.claimedAt = d.claimedAt;
+              this.chosen = d.picked;
+              this.revealed = d.revealed || [];
+              this.locked = true;
+              this.popped = true;
+            }
+          }
+        } catch (e) { /* ignore corrupt state */ }
+        this.tick();
+        this._timer = setInterval(() => this.tick(), 30000);
+      },
+
+      get collectedCount() {
+        return Object.keys(this.collection).length;
+      },
+
+      persist() {
+        try {
+          localStorage.setItem(this.KEY, JSON.stringify({
+            claimedAt: this.claimedAt, picked: this.chosen, revealed: this.revealed,
+            collection: this.collection, streak: this.streak, subscribed: this.subscribed,
+          }));
+        } catch (e) { /* storage may be unavailable */ }
+      },
+
+      pick(n) {
+        if (this.locked || this.chosen !== null) return;
+        this.chosen = n;
+        this.revealed = [...this.pool].sort(() => Math.random() - 0.5).slice(0, 5);
+
+        // streak: consecutive if the previous claim was 7–16 days ago; reset if longer.
+        const gap = this.claimedAt ? Date.now() - this.claimedAt : 0;
+        if (!this.claimedAt) this.streak = 1;
+        else if (gap <= this.cooldownMs * 2.3) this.streak += 1;
+        else this.streak = 1;
+
+        // accumulate into the permanent collection
+        const next = { ...this.collection };
+        for (const s of this.revealed) next[s.label] = (next[s.label] || 0) + 1;
+        this.collection = next;
+
+        this.claimedAt = Date.now();
+        this.locked = true;
+        this.persist();
+        // render stickers first (hidden), then trigger the pop animation
+        this.$nextTick(() => { this.popped = true; });
+        this.tick();
+      },
+
+      subscribe(e) {
+        const form = e.target;
+        const body = new URLSearchParams(new FormData(form)).toString();
+        // Netlify Forms accepts a urlencoded POST to any path on the deployed site.
+        fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body })
+          .catch(() => { /* still mark done locally so UX isn't blocked in dev */ });
+        this.subscribed = true;
+        this.persist();
+        if (window.showToast) window.showToast("You're on the list for the next drop 🎉");
+      },
+
+      tick() {
+        if (!this.locked) { this.remaining = ''; return; }
+        const left = this.claimedAt + this.cooldownMs - Date.now();
+        if (left <= 0) {
+          // cooldown elapsed → reset to a fresh pick
+          this.locked = false;
+          this.popped = false;
+          this.chosen = null;
+          this.revealed = [];
+          this.remaining = '';
+          return;
+        }
+        const d = Math.floor(left / 86400000);
+        const h = Math.floor((left % 86400000) / 3600000);
+        const m = Math.floor((left % 3600000) / 60000);
+        this.remaining = d > 0 ? `${d}d ${h}h` : h > 0 ? `${h}h ${m}m` : `${m}m`;
+      },
+
+      stickerStyle(idx, s) {
+        const f = this.fan[idx] || { tx: 0, ty: -100, rot: 0 };
+        return `--tx:${f.tx}px;--ty:${f.ty}px;--rot:${f.rot}deg;--i:${idx};background:${s.c}`;
+      },
+    }));
+  });
+</script>
+
+<style>
+  .giftwrap {
+    position: relative;
+    padding-top: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: opacity 0.4s ease, filter 0.4s ease;
+  }
+  .giftwrap.is-dimmed { opacity: 0.4; filter: grayscale(0.7); }
+
+  /* ---- gift box ---- */
+  .gift {
+    position: relative;
+    width: 150px;
+    height: 110px;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    display: block;
+  }
+  .gift[disabled] { cursor: not-allowed; }
+  .gift-body {
+    position: absolute;
+    left: 20px;
+    bottom: 0;
+    width: 110px;
+    height: 78px;
+    border-radius: 12px;
+    background: linear-gradient(165deg, #d6ff63 0%, #aee61f 100%);
+    box-shadow: inset 0 -8px 16px rgba(0, 0, 0, 0.14), 0 12px 24px -12px rgba(199, 247, 62, 0.5);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .gift-body::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    width: 18px;
+    height: 100%;
+    background: rgba(16, 16, 18, 0.16);
+  }
+  .qmark {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 34px;
+    color: rgba(16, 16, 18, 0.55);
+    transition: opacity 0.3s ease;
+    z-index: 2;
+  }
+  .qmark.hide { opacity: 0; }
+  .gift-lid {
+    position: absolute;
+    left: 8px;
+    top: 22px;
+    width: 134px;
+    height: 26px;
+    border-radius: 9px;
+    background: linear-gradient(165deg, #c7f73e 0%, #9fe838 100%);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.28);
+    transform-origin: center bottom;
+    transition: transform 0.5s cubic-bezier(0.2, 1.3, 0.32, 1), opacity 0.45s ease;
+    z-index: 4;
+  }
+  .gift-lid::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    width: 18px;
+    height: 100%;
+    background: rgba(16, 16, 18, 0.16);
+  }
+  .bow {
+    position: absolute;
+    left: 50%;
+    top: -15px;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 24px;
+  }
+  .lock {
+    position: absolute;
+    right: 18px;
+    bottom: 8px;
+    z-index: 5;
+    color: rgba(16, 16, 18, 0.6);
+  }
+  .gift:not([disabled]):hover .gift-lid { transform: translateY(-3px) rotate(-2deg); }
+  .gift:not([disabled]):hover .gift-body { transform: translateY(1px); }
+
+  .is-open .gift-lid { transform: translateY(-58px) rotate(-14deg); opacity: 0; }
+  .is-open .gift-body { transform: translateY(4px); }
+
+  /* ---- stickers ---- */
+  .stickers {
+    position: absolute;
+    top: 140px;
+    left: 0;
+    right: 0;
+    height: 0;
+    z-index: 3;
+    pointer-events: none;
+  }
+  .sticker {
+    position: absolute;
+    left: 50%;
+    top: -32px;
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    border: 3px solid #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    color: #101012;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.2) rotate(0deg);
+    transform-origin: center bottom;
+    transition: transform 0.55s cubic-bezier(0.16, 1.4, 0.4, 1), opacity 0.35s ease;
+  }
+  .sticker svg { width: 24px; height: 24px; }
+  .sticker-label {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 9px;
+    letter-spacing: 0.04em;
+  }
+  .is-open .sticker {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--tx)), var(--ty)) rotate(var(--rot)) scale(1);
+    transition-delay: calc(var(--i) * 70ms);
+  }
+
+  /* ---- confetti sparks ---- */
+  .sparks i {
+    position: absolute;
+    left: 50%;
+    top: 30px;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    opacity: 0;
+  }
+  .sparks i:nth-child(1) { background: #c7f73e; }
+  .sparks i:nth-child(2) { background: #fb7185; }
+  .sparks i:nth-child(3) { background: #38bdf8; }
+  .sparks i:nth-child(4) { background: #fbbf24; }
+  .sparks i:nth-child(5) { background: #a78bfa; }
+  .sparks i:nth-child(6) { background: #34d399; }
+  .is-open .sparks i { animation: spark 0.7s ease-out forwards; }
+  .is-open .sparks i:nth-child(1) { --dx: -90px; --dy: -70px; animation-delay: 0.05s; }
+  .is-open .sparks i:nth-child(2) { --dx: -40px; --dy: -110px; animation-delay: 0.1s; }
+  .is-open .sparks i:nth-child(3) { --dx: 30px; --dy: -120px; animation-delay: 0.02s; }
+  .is-open .sparks i:nth-child(4) { --dx: 80px; --dy: -80px; animation-delay: 0.12s; }
+  .is-open .sparks i:nth-child(5) { --dx: -70px; --dy: -30px; animation-delay: 0.15s; }
+  .is-open .sparks i:nth-child(6) { --dx: 70px; --dy: -30px; animation-delay: 0.08s; }
+
+  @keyframes spark {
+    0% { opacity: 1; transform: translate(-50%, 0) scale(1) rotate(0deg); }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), var(--dy)) scale(0.4) rotate(140deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gift-lid, .gift-body, .sticker { transition: none; }
+    .is-open .gift-lid { opacity: 0; transform: translateY(-58px); }
+    .sparks i { display: none; }
+  }
+</style>

@@ -1,0 +1,195 @@
+---
+/**
+ * Premium Packs page (the 10% paid premium)
+ * All guides/content are free. These are the paid premium curated collections + exclusives.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import bundlesData from '../config/bundles.data.json';
+
+const bundles = bundlesData.bundles;
+const guides = await getCollection('guides', ({ data }) => !data.draft);
+
+// Premium packs are editable in the CMS at /admin → "Premium Packs"
+// (src/config/bundles.data.json) — no code needed to add or edit a pack.
+---
+
+<BaseLayout
+  title="Premium Packs | YKS"
+  description="Curated premium packs that bundle the best guides with exclusive bonuses, extra trackers and themed printables for $8–11. The core library stays free."
+  canonical="/bundles"
+>
+  <div class="max-w-5xl mx-auto px-6 pt-10 pb-32" x-data="bundleBuilder" x-cloak>
+    <div class="max-w-2xl mb-10">
+      <div class="eyebrow mb-3">Premium packs</div>
+      <h1 class="text-5xl md:text-6xl">Build your bundle</h1>
+      <p class="mt-4 text-lg text-text-muted leading-relaxed">Thoughtfully curated collections that bundle the guides with exclusive bonus materials, extra trackers and themed printables you won't find in the free downloads. Pick the packs you want — <strong class="text-text">grab 2 and save 10%, all 3 and save 20%.</strong> Every individual guide stays free — <a href="/guides" class="text-primary underline underline-offset-4">start on the guides page</a>.</p>
+    </div>
+
+    <div class="space-y-12">
+      {bundles.map(bundle => {
+        const bundleGuides = guides.filter(g => bundle.guides.includes(g.data.slug));
+        return (
+          <div
+            class="bg-bg-card border rounded-3xl p-8 md:p-10 transition-colors"
+            :class={`selected['${bundle.id}'] ? 'border-primary' : 'border-border'`}
+          >
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-8">
+              <div>
+                <div class="inline-flex items-center gap-2 mb-3">
+                  <span class="badge badge-paid">BUNDLE</span>
+                  <span class="text-xs text-text-subtle">Save ${bundle.savings}</span>
+                </div>
+                <h2 class="text-3xl font-semibold tracking-tight mb-2">{bundle.name}</h2>
+                <p class="text-text-muted max-w-lg">{bundle.description}</p>
+              </div>
+              <div class="text-right">
+                <div class="flex items-baseline justify-end gap-2 mb-1">
+                  <span class="text-4xl font-semibold tabular-nums">${bundle.price}</span>
+                  <span class="text-text-subtle line-through">$${bundle.original}</span>
+                </div>
+                <div class="text-xs text-text-subtle">One-time • Instant delivery • Lifetime updates</div>
+              </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 mb-8">
+              <!-- Includes -->
+              <div>
+                <div class="font-medium mb-3 flex items-center gap-2">
+                  <span>📦</span> What's Included
+                </div>
+                <ul class="space-y-2 text-sm">
+                  {bundle.includes.map(item => (
+                    <li class="flex gap-2"><span class="text-primary">✓</span> {item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <!-- Guides in bundle -->
+              <div>
+                <div class="font-medium mb-3">Guides in this bundle</div>
+                <div class="space-y-3">
+                  {bundleGuides.map(g => (
+                    <a href={`/guides/${g.data.slug}`} class="block text-sm hover:text-primary">
+                      {g.data.title} <span class="text-text-subtle">— {g.data.isFree ? 'FREE' : '$' + g.data.price}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div class="border-t border-border pt-6 flex flex-col md:flex-row items-start md:items-center gap-4">
+              <div class="flex-1">
+                <div class="text-xs text-text-muted mb-1">Real results from users of these guides</div>
+                <div class="text-sm">{bundle.results}</div>
+              </div>
+              <button
+                type="button"
+                @click={`toggle('${bundle.id}', ${bundle.price})`}
+                class="btn px-8 whitespace-nowrap"
+                :class={`selected['${bundle.id}'] ? 'btn-secondary' : 'btn-primary'`}
+              >
+                <span x-text={`selected['${bundle.id}'] ? '✓ Added to bundle' : 'Add to bundle'`}>Add to bundle</span>
+              </button>
+            </div>
+
+            <div class="mt-4 text-[10px] text-text-subtle">30-day money-back guarantee. Delivered via Lemon Squeezy. Includes all future updates.</div>
+          </div>
+        );
+      })}
+    </div>
+
+    <div class="mt-12 text-center text-sm text-text-muted">
+      All individual guides are free. Only grab a premium pack if you want the exclusive bonuses and curated collections on top of the free library.
+    </div>
+
+    <!-- ===== STICKY BUNDLE BAR ===== -->
+    <div
+      x-show="count > 0"
+      x-cloak
+      class="sticky-cta fixed bottom-0 left-0 right-0 z-40 border-t border-border glass"
+    >
+      <div class="max-w-5xl mx-auto px-6 py-4 flex flex-wrap items-center gap-x-6 gap-y-3">
+        <div class="flex items-center gap-3">
+          <span class="font-display font-bold text-lg tabular-nums" x-text="count"></span>
+          <span class="text-sm text-text-muted" x-text="count === 1 ? 'pack selected' : 'packs selected'"></span>
+        </div>
+
+        <div class="flex items-center gap-2.5 text-sm">
+          <span class="text-text-subtle line-through tabular-nums" x-show="discount > 0" x-cloak x-text="'$' + subtotal"></span>
+          <span class="font-display font-bold text-2xl tabular-nums" x-text="'$' + total"></span>
+          <span x-show="discount > 0" x-cloak class="badge badge-free" x-text="'Save $' + discount + ' (' + ratePct + '%)'"></span>
+        </div>
+
+        <!-- next-tier nudge -->
+        <div class="font-mono text-[11px] text-primary tracking-wide hidden sm:block" x-show="count < 3" x-cloak>
+          <span x-show="count === 1" x-cloak>+1 pack → 10% off</span>
+          <span x-show="count === 2" x-cloak>+1 pack → 20% off the whole set</span>
+        </div>
+
+        <div class="flex items-center gap-2 ml-auto">
+          <button @click="clear()" class="btn btn-ghost text-sm">Clear</button>
+          <button @click="checkout()" class="btn btn-primary px-7 whitespace-nowrap">
+            <span x-text="'Checkout — $' + total"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('alpine:init', () => {
+      // Optional: set a Lemon Squeezy "All-Access" checkout URL once created in the
+      // Lemon dashboard, plus per-pack URLs. Until then, checkout shows guidance.
+      const ALL_ACCESS_URL = '';
+      const PACK_URLS = {}; // { 'adhd-habits-starter': 'https://...', ... }
+
+      window.Alpine.data('bundleBuilder', () => ({
+        selected: {},
+
+        toggle(id, price) {
+          const next = { ...this.selected };
+          if (next[id]) delete next[id];
+          else next[id] = price;
+          this.selected = next;
+        },
+
+        clear() { this.selected = {}; },
+
+        get count() { return Object.keys(this.selected).length; },
+        get subtotal() { return Object.values(this.selected).reduce((a, b) => a + b, 0); },
+        get rate() { return this.count >= 3 ? 0.20 : this.count === 2 ? 0.10 : 0; },
+        get ratePct() { return Math.round(this.rate * 100); },
+        get discount() { return Math.round(this.subtotal * this.rate); },
+        get total() { return this.subtotal - this.discount; },
+
+        checkout() {
+          const ids = Object.keys(this.selected);
+          const open = (url) => {
+            if (window.LemonSqueezy && window.LemonSqueezy.Url) window.LemonSqueezy.Url.Open(url);
+            else window.location.href = url;
+          };
+          if (ids.length >= 3 && ALL_ACCESS_URL) return open(ALL_ACCESS_URL);
+          if (ids.length === 1 && PACK_URLS[ids[0]]) return open(PACK_URLS[ids[0]]);
+          // Not yet wired to Lemon — surface the deal and guide to checkout setup.
+          if (window.showToast) {
+            window.showToast(`Bundle ready: ${this.count} packs for $${this.total}. Connect Lemon Squeezy in bundles.astro to enable one-click checkout.`);
+          }
+        },
+      }));
+    });
+  </script>
+
+  <style>
+    .sticky-cta[style*="block"] {
+      animation: bundleBarUp 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    @keyframes bundleBarUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .sticky-cta[style*="block"] { animation: none; }
+    }
+  </style>
+</BaseLayout>

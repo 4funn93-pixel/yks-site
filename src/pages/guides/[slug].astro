@@ -1,0 +1,322 @@
+---
+/**
+ * Dynamic Guide Detail Page — The highest-leverage conversion page on the site
+ * Rich SEO, persuasive long-form, accessible lightbox, sticky/mobile conversion, Lemon Squeezy
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import LemonBuyButton from '../../components/LemonBuyButton.astro';
+import FreeDownloadButton from '../../components/FreeDownloadButton.astro';
+import GuideIncludes from '../../components/GuideIncludes.astro';
+import { getCollection, render } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import { SITE } from '../../config/site';
+import { PRO } from '../../config/pro';
+
+export async function getStaticPaths() {
+  const guides = await getCollection('guides', ({ data }) => !data.draft);
+  return guides.map(guide => ({
+    params: { slug: guide.data.slug },
+    props: { guide },
+  }));
+}
+
+const { guide } = Astro.props as { guide: CollectionEntry<'guides'> };
+const { data } = guide;
+const { Content } = await render(guide);
+
+const isProOnly = data.proOnly;
+const isFree = !isProOnly && (data.isFree || data.price === 0);
+
+// Related guides (same category or overlapping tags, exclude self)
+const allGuides = await getCollection('guides', ({ data: d }) => !d.draft && d.slug !== data.slug);
+const related = allGuides
+  .filter(g => g.data.category === data.category || g.data.tags.some(t => data.tags.includes(t)))
+  .sort((a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime())
+  .slice(0, 3);
+
+// Structured data: Product + Offer + AggregateRating + FAQPage
+const productJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: data.title,
+  description: data.description,
+  image: data.coverImage?.src ? `${SITE.url}${data.coverImage.src}` : undefined,
+  brand: { '@type': 'Brand', name: SITE.name },
+  offers: {
+    '@type': 'Offer',
+    url: `${SITE.url}/guides/${data.slug}`,
+    price: data.price,
+    priceCurrency: 'USD',
+    availability: 'https://schema.org/InStock',
+    seller: { '@type': 'Organization', name: SITE.name },
+  },
+  // No aggregateRating until we have real, verifiable reviews — fabricated
+  // rating markup violates Google's review snippet policy and erodes trust.
+};
+
+const faqJsonLd = data.faqs?.length ? {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: data.faqs.map(faq => ({
+    '@type': 'Question',
+    name: faq.question,
+    acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+  })),
+} : null;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [productJsonLd, ...(faqJsonLd ? [faqJsonLd] : [])],
+};
+---
+
+<BaseLayout
+  title={data.title}
+  description={data.description}
+  image={data.coverImage?.src}
+  canonical={`/guides/${data.slug}`}
+  type="product"
+  publishedTime={data.publishedAt.toISOString()}
+  modifiedTime={data.updatedAt?.toISOString()}
+  jsonLd={jsonLd}
+>
+  <!-- Reading Progress -->
+  <div id="reading-progress" style="width: 0%"></div>
+
+  <div class="max-w-5xl mx-auto px-6 pt-8 pb-20">
+    <!-- Breadcrumbs -->
+    <nav class="text-sm text-text-subtle mb-6 flex items-center gap-2" aria-label="Breadcrumb">
+      <a href="/" class="hover:text-primary">Home</a>
+      <span>→</span>
+      <a href="/guides" class="hover:text-primary">Guides</a>
+      <span>→</span>
+      <span class="text-text-muted line-clamp-1">{data.title}</span>
+    </nav>
+
+    <div class="grid lg:grid-cols-12 gap-x-10 gap-y-12">
+      <!-- Main Content -->
+      <div class="lg:col-span-7">
+        <!-- Hero Info -->
+        <div class="mb-6">
+          <div class="flex flex-wrap gap-2 mb-4">
+            <span class={`badge ${isFree ? 'badge-free' : 'badge-paid'} text-sm`}>{data.category}</span>
+            {data.tags.slice(0, 3).map(tag => (
+              <span class="text-xs px-3 py-1 rounded-full border border-border text-text-subtle">{tag}</span>
+            ))}
+          </div>
+
+          <h1 class="text-4xl md:text-[42px] leading-none tracking-[-2.2px] font-semibold mb-4 pr-4">{data.title}</h1>
+
+          <div class="flex items-center gap-3 text-sm text-text-subtle">
+            <span>{data.category}</span>
+            <span>•</span>
+            <span>{data.readingTime} read</span>
+            <span class="hidden sm:inline">•</span>
+            <span class="hidden sm:inline">Updated {(data.updatedAt ?? data.publishedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+          </div>
+        </div>
+
+        <!-- Preview Gallery + Accessible Lightbox -->
+        {data.previewImages && data.previewImages.length > 0 && (
+          <div class="mb-12">
+            <div class="text-xs uppercase tracking-[2px] text-primary mb-3">INSIDE THE GUIDE — PAGE PREVIEWS</div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {data.previewImages.map((img, idx) => (
+                <div 
+                  class="group relative overflow-hidden rounded-2xl border border-border bg-surface aspect-video"
+                >
+                  <img src={img.src} alt={img.alt} class="w-full h-full object-cover group-hover:scale-105 transition" loading="lazy" />
+                  <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                    <span class="text-white text-xs tracking-widest font-medium">PREVIEW</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <!-- Lightbox Modal (client-only interactive - temporarily simplified for build stability; thumbnails remain fully functional) -->
+            <!-- Re-enable by restoring the Alpine modal when running in a compatible Astro version -->
+          </div>
+        )}
+
+        <!-- Persuasive Long-form MDX Content -->
+        <article class="prose prose-invert max-w-none">
+          <Content />
+        </article>
+
+        <!-- Testimonials for this guide (if provided in frontmatter) -->
+        {data.testimonials && data.testimonials.length > 0 && (
+          <div class="mt-14">
+            <h3 class="font-semibold text-xl tracking-tight mb-6">What readers are saying</h3>
+            <div class="space-y-5">
+              {data.testimonials.map((t: any) => (
+                <div class="bg-surface border border-border rounded-2xl p-6 text-sm">
+                  <div class="flex text-amber-400 mb-3">★★★★★</div>
+                  <p class="italic">“{t.quote}”</p>
+                  <div class="mt-3 text-xs text-text-subtle">— {t.author}{t.role ? `, ${t.role}` : ''}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <!-- What's Included - Competitor-inspired tangible value -->
+        {data.keyOutcomes && data.keyOutcomes.length > 0 && (
+          <GuideIncludes
+            includes={data.keyOutcomes}
+            templates={data.previewImages?.length || 0}
+            pages={data.readingTime.replace(' min', '')}
+          />
+        )}
+
+        <!-- FAQ Accordion (Alpine powered, SEO-friendly) -->
+        {data.faqs && data.faqs.length > 0 && (
+          <div class="mt-14" x-data="{ open: null }">
+            <h3 class="font-semibold text-xl tracking-tight mb-6">Frequently Asked Questions</h3>
+            <div class="space-y-2">
+              {data.faqs.map((faq: any, idx: number) => (
+                <div class="border border-border rounded-2xl overflow-hidden bg-surface">
+                  <button 
+                    @click="open = open === idx ? null : idx"
+                    class="faq-question w-full text-left px-6 py-4 flex justify-between items-center font-medium text-base"
+                    :aria-expanded="open === idx"
+                  >
+                    <span>{faq.question}</span>
+                    <span class="text-primary text-xl leading-none transition" :class="{ 'rotate-45': open === idx }">+</span>
+                  </button>
+                  <div class="faq-answer px-6" :class="{ 'open': open === idx }">
+                    <div class="pb-6 pt-1 text-text-muted text-[15px] leading-relaxed">{faq.answer}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <!-- Share -->
+        <div class="mt-12 pt-8 border-t border-border flex flex-wrap items-center gap-4">
+          <span class="text-sm text-text-subtle">Share this guide:</span>
+          <div class="flex gap-2">
+            <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Practical printables from YKS: ${data.title}`)}&url=${encodeURIComponent(Astro.url.href)}`} target="_blank" class="share-btn" aria-label="Share on X">𝕏</a>
+            <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(Astro.url.href)}`} target="_blank" class="share-btn" aria-label="Share on LinkedIn">in</a>
+            <a href={`https://www.reddit.com/submit?url=${encodeURIComponent(Astro.url.href)}&title=${encodeURIComponent(data.title)}`} target="_blank" class="share-btn" aria-label="Share on Reddit">🡥</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sticky / Mobile Conversion Sidebar -->
+      <div class="lg:col-span-5">
+        <div class="lg:sticky lg:top-24 space-y-6">
+          <div class="bg-bg-card border border-border rounded-3xl p-8">
+            <div class="mb-5">
+              <div class="text-xs uppercase tracking-widest text-text-subtle">{isProOnly ? 'PRO EXCLUSIVE' : 'YOUR EDGE AWAITS'}</div>
+              <div class="text-5xl font-semibold tabular-nums tracking-tighter mt-1">
+                {isProOnly ? 'Pro' : isFree ? 'FREE' : `$${data.price}`}
+                <span class="text-base font-normal text-text-subtle"> {isProOnly ? 'members only' : 'digital PDF'}</span>
+              </div>
+              {!isFree && !isProOnly && (
+                <div class="text-[11px] text-primary mt-1">Most guides are free — browse <a href="/guides" class="underline">the free library</a> first</div>
+              )}
+            </div>
+
+            {isProOnly ? (
+              <a href="/pro" class="btn btn-primary w-full justify-center text-base py-4 px-9 shadow-xl shadow-primary/30">
+                Unlock with {PRO.name} →
+              </a>
+            ) : isFree ? (
+              <FreeDownloadButton filename={data.pdfFilename} title={data.title} />
+            ) : (
+              <LemonBuyButton
+                variantId={data.lemonSqueezyVariantId}
+                checkoutUrl={data.checkoutUrl}
+                price={data.price}
+                title={data.title}
+                label={`Download High-Quality PDF — $${data.price}`}
+              />
+            )}
+
+            {/* High-res / editable upsell for free guides that have a Pro version */}
+            {isFree && data.highResPdf && (
+              <a href="/pro" class="mt-4 flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/[0.06] px-4 py-3 hover:border-primary/60 transition-colors group/pro">
+                <span class="badge badge-pro shrink-0">PRO</span>
+                <span class="text-xs text-text-muted flex-1">Want the <strong class="text-text">high-resolution + editable</strong> version? It's in {PRO.name}.</span>
+                <span class="text-primary text-sm group-hover/pro:translate-x-0.5 transition-transform" aria-hidden="true">→</span>
+              </a>
+            )}
+
+            {/* What Pro adds to this specific guide */}
+            {!isProOnly && data.proBonuses && data.proBonuses.length > 0 && (
+              <div class="mt-4 text-[11px] text-text-subtle">
+                <span class="text-primary">Pro adds:</span> {data.proBonuses.join(' · ')}
+              </div>
+            )}
+
+            {/* Physical print + ship. Only shown once a real print-on-demand
+                checkout URL (Lulu / Gelato / Prodigi) is set — Lemon Squeezy
+                cannot fulfil physical goods, so we never route print through it. */}
+            {data.printPrice && data.printCheckoutUrl && (
+              <div class="mt-4 pt-4 border-t border-border">
+                <div class="text-xs text-text-subtle mb-2">Prefer a physical copy?</div>
+                <a
+                  href={data.printCheckoutUrl}
+                  target="_blank"
+                  rel="noopener"
+                  class="btn btn-secondary w-full justify-center text-base py-4"
+                >
+                  Order printed &amp; shipped — ${data.printPrice}
+                </a>
+                <div class="mt-3 text-center text-[11px] text-text-subtle space-y-0.5">
+                  <div>✓ Printed on premium paper, shipped to you</div>
+                  <div>✓ Fulfilled by our print partner</div>
+                </div>
+              </div>
+            )}
+
+            <div class="mt-8 text-xs text-text-subtle border-t border-border pt-5">
+              Last updated: {data.updatedAt ? data.updatedAt.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : data.publishedAt.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}<br />
+              {data.author} • {data.readingTime} read
+            </div>
+          </div>
+
+          <div class="text-[11px] text-center text-text-subtle px-2">
+            Free downloads are instant. Premium packs are protected by a 30-day "actually useful" guarantee.
+          </div>
+
+          <!-- Related Guides -->
+          {related.length > 0 && (
+            <div class="pt-4">
+              <div class="text-xs uppercase tracking-widest text-text-subtle mb-3 px-1">YOU MAY ALSO LIKE</div>
+              <div class="space-y-3">
+                {related.map(r => (
+                  <a href={`/guides/${r.data.slug}`} class="block bg-surface border border-border hover:border-primary rounded-2xl p-4 text-sm transition">
+                    <div class="font-medium line-clamp-2">{r.data.title}</div>
+                    <div class="text-primary text-xs mt-1">{r.data.isFree ? 'FREE' : `$${r.data.price}`}</div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Reading progress bar (Alpine not needed here)
+    function initReadingProgress() {
+      const bar = document.getElementById('reading-progress');
+      if (!bar) return;
+
+      const update = () => {
+        const h = document.documentElement;
+        const scrollTop = h.scrollTop || document.body.scrollTop;
+        const scrollHeight = h.scrollHeight - h.clientHeight;
+        const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+        (bar as HTMLElement).style.width = `${Math.min(progress, 100)}%`;
+      };
+
+      window.addEventListener('scroll', update, { passive: true });
+      update();
+    }
+    initReadingProgress();
+  </script>
+</BaseLayout>

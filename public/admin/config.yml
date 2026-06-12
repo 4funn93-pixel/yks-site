@@ -1,0 +1,254 @@
+# ============================================================================
+# Sveltia / Decap CMS configuration  —  YKS admin
+#
+# Login: GitHub.  Content is committed straight to the repo, which triggers a
+# Netlify deploy. Admins must be repo collaborators with write access.
+#
+# >>> BEFORE THIS WORKS, set the two placeholders below (repo + branch) and
+#     complete the one-time OAuth setup in ADMIN.md. <<<
+# ============================================================================
+
+backend:
+  name: github
+  # ⚠️ SEPARATION: YKS lives under the PARTNER's GitHub account, NOT PhantomPrints.
+  # Set this to the partner's "owner/repo" once the repo exists (see ADMIN.md).
+  # Leaving the old PhantomPrints value here would route every editor's content
+  # commit into the wrong account — that's the mixing we're preventing.
+  repo: 4funn93-pixel/yks-site   # partner's repo (NOT PhantomPrints)
+  branch: main                    # must match the branch Netlify builds
+  # OAuth is handled by Netlify's provider by default (see ADMIN.md, "Option A").
+  # If you instead self-host the OAuth relay on Cloudflare Workers, uncomment:
+  # base_url: https://your-oauth-worker.workers.dev
+  # auth_endpoint: /auth
+
+# Lets you run the CMS against local files during development without logging in.
+# Start the proxy with:  npx @sveltia/cms-proxy-server   (then visit /admin)
+local_backend: true
+
+# PR-based review: saving creates a draft pull request that someone approves
+# before it goes live (safer for multiple admins). Set to "simple" to publish on save.
+publish_mode: editorial_workflow
+
+# Default location for uploaded media (overridden per-field below).
+media_folder: "public"
+public_folder: "/"
+
+collections:
+  # ===================== SITE SETTINGS (brand, domain, social, analytics) ====
+  - name: "settings"
+    label: "Site Settings"
+    description: "Brand name, domain, contact email, social links and analytics. Changes rebuild the whole site."
+    editor:
+      preview: false
+    files:
+      - name: "site"
+        label: "Site & Brand"
+        file: "src/config/site.data.json"
+        fields:
+          - { label: "Brand name", name: "name", widget: "string", hint: "Shown across the site and in metadata." }
+          - { label: "Tagline", name: "tagline", widget: "string" }
+          - { label: "Description (for SEO / social)", name: "description", widget: "text" }
+          - { label: "Production domain", name: "url", widget: "string", hint: "Full URL, no trailing slash — e.g. https://yourdomain.com" }
+          - { label: "Contact email", name: "email", widget: "string" }
+          - { label: "Founding year", name: "foundingYear", widget: "string" }
+          - { label: "Default share image path", name: "defaultOgImage", widget: "string", hint: "e.g. /og/default-og.jpg" }
+          - label: "Social links"
+            name: "social"
+            widget: "object"
+            fields:
+              - { label: "X / Twitter URL", name: "x", widget: "string", required: false }
+              - { label: "LinkedIn URL", name: "linkedin", widget: "string", required: false }
+          - label: "Analytics"
+            name: "analytics"
+            widget: "object"
+            fields:
+              - { label: "Plausible domain (leave blank to disable analytics)", name: "plausibleDomain", widget: "string", required: false }
+
+  # ===================== YKS PRO (membership pricing & features) =============
+  - name: "pro"
+    label: "Pro Settings"
+    description: "YKS Pro pricing, Lemon Squeezy checkout links and the feature list."
+    editor:
+      preview: false
+    files:
+      - name: "pro"
+        label: "YKS Pro"
+        file: "src/config/pro.data.json"
+        fields:
+          - { label: "Name", name: "name", widget: "string" }
+          - { label: "Tagline", name: "tagline", widget: "string" }
+          - { label: "Monthly price (USD)", name: "priceMonthly", widget: "number", value_type: "int" }
+          - { label: "Yearly price (USD)", name: "priceYearly", widget: "number", value_type: "int" }
+          - { label: "Currency", name: "currency", widget: "string", default: "USD" }
+          - { label: "Monthly checkout URL (Lemon Squeezy subscription)", name: "checkoutMonthly", widget: "string", required: false }
+          - { label: "Yearly checkout URL (Lemon Squeezy subscription)", name: "checkoutYearly", widget: "string", required: false }
+          - { label: "Features (one per line)", name: "features", widget: "list" }
+          - { label: "Guarantee line", name: "guarantee", widget: "string" }
+
+  # ===================== PREMIUM PACKS (the /bundles page) ===================
+  - name: "bundles"
+    label: "Premium Packs"
+    description: "The curated paid bundles shown on /bundles. Add, edit or reorder packs."
+    editor:
+      preview: false
+    files:
+      - name: "bundles"
+        label: "Packs"
+        file: "src/config/bundles.data.json"
+        fields:
+          - label: "Packs"
+            name: "bundles"
+            widget: "list"
+            label_singular: "Pack"
+            fields:
+              - { label: "ID (kebab-case, unique)", name: "id", widget: "string" }
+              - { label: "Name", name: "name", widget: "string" }
+              - { label: "Price (USD)", name: "price", widget: "number", value_type: "int" }
+              - { label: "Original price (USD, for the strikethrough)", name: "original", widget: "number", value_type: "int" }
+              - { label: "Savings (USD)", name: "savings", widget: "number", value_type: "int" }
+              - { label: "Description", name: "description", widget: "text" }
+              - { label: "Guide slugs included", name: "guides", widget: "list", hint: "Use the exact slug of each guide, e.g. ai-creator-os." }
+              - { label: "What's included (bullets)", name: "includes", widget: "list" }
+              - { label: "Results line", name: "results", widget: "text" }
+              - { label: "CTA button text", name: "cta", widget: "string" }
+
+  # ===================== PRINTABLES (Guides, Calendars, Puzzles, Trackers) ===
+  - name: "guides"
+    label: "Printables"
+    label_singular: "Printable"
+    folder: "src/content/guides"
+    create: true
+    delete: true
+    slug: "{{slug}}"
+    extension: "mdx"
+    format: "frontmatter"
+    media_folder: "public/images/guides"
+    public_folder: "/images/guides"
+    fields:
+      - { label: "Title (12–85 chars)", name: "title", widget: "string", required: true }
+      - { label: "Slug (kebab-case, must match filename)", name: "slug", widget: "string", required: true, pattern: ['^[a-z0-9]+(?:-[a-z0-9]+)*$', "Use lowercase letters, numbers and hyphens only"] }
+      - { label: "Description (60–220 chars · used for SEO + cards)", name: "description", widget: "text", required: true }
+
+      - { label: "Price in USD (0 = free)", name: "price", widget: "number", value_type: "int", min: 0, max: 15, default: 0, hint: "Most guides are free. Premium items are $5–15." }
+      - { label: "Free? (shows the instant-download button)", name: "isFree", widget: "boolean", default: true }
+      - { label: "Lemon Squeezy Variant ID (paid digital PDF)", name: "lemonSqueezyVariantId", widget: "string", required: false }
+      - { label: "Checkout URL (fallback for digital)", name: "checkoutUrl", widget: "string", required: false }
+
+      # Optional: high-quality shipped printout. Physical print ships via a
+      # print-on-demand partner (Lulu/Gelato/Prodigi) — paste that checkout URL.
+      # (Lemon Squeezy can't ship physical goods, so the print button only shows
+      #  once a Print Checkout URL is set.)
+      - { label: "Print Price (shipped physical, optional)", name: "printPrice", widget: "number", value_type: "int", required: false }
+      - { label: "Print Checkout URL (print-on-demand partner)", name: "printCheckoutUrl", widget: "string", required: false, hint: "e.g. your Lulu/Gelato product link. Required for the printed-copy button to appear." }
+
+      # ---- YKS Pro (membership) ----
+      - { label: "Pro-only (members exclusive)?", name: "proOnly", widget: "boolean", default: false, hint: "If ON, the whole item is locked to YKS Pro members (no free version)." }
+      - label: "High-res / editable PDF (Pro members)"
+        name: "highResPdf"
+        widget: "file"
+        media_folder: "public/downloads/pro"
+        public_folder: "/downloads/pro"
+        required: false
+        hint: "Members-only high-resolution version. Saved under /downloads/pro (gated at the CDN)."
+      - { label: "Pro bonuses (what Pro adds to this item)", name: "proBonuses", widget: "list", required: false, hint: "e.g. '300dpi PDF', 'Editable Canva template'." }
+
+      # PDF upload → saved into public/downloads/, value stored as "/downloads/<file>.pdf"
+      - label: "PDF File (the downloadable guide)"
+        name: "pdfFilename"
+        widget: "file"
+        media_folder: "public/downloads"
+        public_folder: "/downloads"
+        required: false
+
+      - label: "Cover Image"
+        name: "coverImage"
+        widget: "object"
+        fields:
+          - { label: "Image", name: "src", widget: "image", media_folder: "public/images/guides", public_folder: "/images/guides", required: true }
+          - { label: "Alt text (accessibility + SEO)", name: "alt", widget: "string", required: true }
+
+      # Preview screenshots for the lightbox. If used, add 3–8.
+      - label: "Preview Images (optional · 3–8 if used)"
+        name: "previewImages"
+        widget: "list"
+        required: false
+        min: 3
+        max: 8
+        fields:
+          - { label: "Image", name: "src", widget: "image", media_folder: "public/images/guides", public_folder: "/images/guides", required: true }
+          - { label: "Alt text", name: "alt", widget: "string", required: true }
+
+      - label: "Category"
+        name: "category"
+        widget: "select"
+        options: ["Guides", "Calendars", "Puzzles", "Trackers"]
+        required: true
+
+      - { label: "Tags (2–8)", name: "tags", widget: "list", default: [] }
+
+      - { label: "Published date", name: "publishedAt", widget: "datetime", required: true }
+      - { label: "Updated date (optional)", name: "updatedAt", widget: "datetime", required: false }
+      - { label: "Author", name: "author", widget: "string", default: "YKS Team" }
+      - { label: "Reading time (e.g. '18 min')", name: "readingTime", widget: "string", default: "18 min" }
+
+      - { label: "Key outcomes (bullets shown on the page)", name: "keyOutcomes", widget: "list", default: [], required: false }
+      - { label: "Who this is for (bullets)", name: "whoThisIsFor", widget: "list", default: [], required: false }
+
+      - label: "FAQs (3–7 recommended, optional)"
+        name: "faqs"
+        widget: "list"
+        required: false
+        fields:
+          - { label: "Question", name: "question", widget: "string", required: true }
+          - { label: "Answer", name: "answer", widget: "text", required: true }
+
+      - { label: "Feature on homepage?", name: "featured", widget: "boolean", default: false }
+      - { label: "Draft (hide from the site)?", name: "draft", widget: "boolean", default: false }
+
+      # Body content. To use <Callout> in the text, add this import as the FIRST line:
+      #   import Callout from '../../components/Callout.astro';
+      - { label: "Body (Markdown / MDX)", name: "body", widget: "markdown", required: true }
+
+  # ===================== BLOG ================================================
+  - name: "blog"
+    label: "Blog"
+    label_singular: "Post"
+    folder: "src/content/blog"
+    create: true
+    delete: true
+    slug: "{{slug}}"
+    extension: "mdx"
+    format: "frontmatter"
+    media_folder: "public/images/blog"
+    public_folder: "/images/blog"
+    fields:
+      - { label: "Title (20–75 chars)", name: "title", widget: "string", required: true }
+      - { label: "Slug (kebab-case)", name: "slug", widget: "string", required: true, pattern: ['^[a-z0-9]+(?:-[a-z0-9]+)*$', "Use lowercase letters, numbers and hyphens only"] }
+      - { label: "Description (90–185 chars · SEO)", name: "description", widget: "text", required: true }
+
+      - label: "Cover Image"
+        name: "coverImage"
+        widget: "object"
+        fields:
+          - { label: "Image", name: "src", widget: "image", media_folder: "public/images/blog", public_folder: "/images/blog", required: true }
+          - { label: "Alt text", name: "alt", widget: "string", required: true }
+
+      - label: "Category"
+        name: "category"
+        widget: "select"
+        options: ["Productivity", "Planning", "Mindfulness", "Creativity", "Organization", "Fun & Games"]
+        required: true
+
+      - { label: "Tags (2–6)", name: "tags", widget: "list", default: [] }
+
+      - { label: "Published date", name: "publishedAt", widget: "datetime", required: true }
+      - { label: "Updated date (optional)", name: "updatedAt", widget: "datetime", required: false }
+      - { label: "Author", name: "author", widget: "string", default: "YKS Team" }
+      - { label: "Author role", name: "authorRole", widget: "string", default: "Curator, YKS" }
+      - { label: "Author bio (optional)", name: "authorBio", widget: "text", required: false }
+      - { label: "Reading time", name: "readingTime", widget: "string", default: "7 min" }
+
+      - { label: "Featured?", name: "featured", widget: "boolean", default: false }
+      - { label: "Draft?", name: "draft", widget: "boolean", default: false }
+
+      - { label: "Body (Markdown / MDX)", name: "body", widget: "markdown", required: true }

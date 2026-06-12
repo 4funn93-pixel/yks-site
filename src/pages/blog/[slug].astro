@@ -1,0 +1,76 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  return posts.map(post => ({
+    params: { slug: post.data.slug }, // use data.slug (now declared in schema) for consistency with guides + explicit FM
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { data } = post;
+const { Content } = await render(post);
+
+const relatedGuides = (await getCollection('guides', ({ data: d }) => !d.draft)).filter(g => 
+  g.data.tags.some(t => data.tags.includes(t)) || g.data.category.toLowerCase().includes(data.category.toLowerCase())
+).slice(0, 2);
+---
+
+<BaseLayout
+  title={data.title}
+  description={data.description}
+  image={data.coverImage?.src}
+  canonical={`/blog/${data.slug}`}
+  type="article"
+  publishedTime={data.publishedAt.toISOString()}
+>
+  <article class="max-w-3xl mx-auto px-6 pt-10 pb-24">
+    <div class="text-xs uppercase tracking-widest text-primary mb-2">{data.category}</div>
+    <h1 class="text-4xl md:text-5xl tracking-[-2.2px] font-semibold leading-none mb-5">{data.title}</h1>
+
+    <div class="flex items-center gap-3 text-sm text-text-subtle mb-8">
+      <span>{data.author} — {data.authorRole}</span>
+      <span>•</span>
+      <span>{data.publishedAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+      <span>•</span>
+      <span>{data.readingTime}</span>
+    </div>
+
+    <div class="prose prose-invert max-w-none text-[17px]">
+      <Content />
+    </div>
+
+    <!-- Author Box (E-E-A-T) -->
+    <div class="mt-14 border border-border bg-surface rounded-3xl p-8 flex gap-6">
+      <div class="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary flex-shrink-0"></div>
+      <div>
+        <div class="font-semibold">{data.author}</div>
+        <div class="text-text-muted text-sm">{data.authorRole}</div>
+        <p class="mt-3 text-sm text-text-muted">{data.authorBio || "YKS contributor focused on practical printables and systems that help you stay organized."}</p>
+      </div>
+    </div>
+
+    <!-- Internal Funnel to Guides -->
+    {relatedGuides.length > 0 && (
+      <div class="mt-12 pt-8 border-t border-border">
+        <div class="uppercase text-xs tracking-widest text-primary mb-4">DEEPER SYSTEMS</div>
+        <div class="grid sm:grid-cols-2 gap-4">
+          {relatedGuides.map(g => (
+            <a href={`/guides/${g.data.slug}`} class="block border border-border hover:border-primary bg-surface p-5 rounded-2xl">
+              <div class="text-sm font-medium">{g.data.title}</div>
+              <div class="text-xs text-primary mt-1">{g.data.isFree ? 'FREE GUIDE' : `$${g.data.price} GUIDE`}</div>
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <!-- Share -->
+    <div class="mt-10 flex gap-3">
+      <a href={`https://x.com/intent/tweet?text=${encodeURIComponent(data.title)}&url=${encodeURIComponent(Astro.url.href)}`} class="btn btn-secondary text-sm">Share on X</a>
+    </div>
+  </article>
+</BaseLayout>

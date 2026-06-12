@@ -1,0 +1,137 @@
+---
+/**
+ * ToolMockup — on-brand SVG "screenshot" of a tool inside a browser frame.
+ * Renders the dark-first app UI (consistent regardless of page theme, like a
+ * real screenshot) with the acid-lime accent. No raster images, no stock.
+ *
+ * variant: 'habit' | 'focus' | 'planner'
+ * 'planner' is a faded "coming soon" frame.
+ */
+interface Props {
+  variant: 'habit' | 'focus' | 'planner';
+  label?: string;
+  class?: string;
+}
+const { variant, label, class: className = '' } = Astro.props;
+
+// Fixed app palette (the tools are dark-first; the mockup is a snapshot).
+const C = {
+  frame: '#1a1a1f',
+  bar: '#131316',
+  screen: '#0e0e11',
+  card: '#131316',
+  border: '#26262c',
+  primary: '#c7f73e',
+  ink: '#101012',
+  text: '#f4f4f5',
+  muted: '#a1a1aa',
+  subtle: '#71717a',
+};
+
+const addr = variant === 'focus' ? 'yks.site/tools/focus-timer'
+  : variant === 'planner' ? 'yks.site/tools/weekly-planner'
+  : 'yks.site/tools/habit-tracker';
+
+// habit grid: 1 = filled (lime), 0 = empty
+const rows = [
+  { y: 150, cells: [1, 1, 1, 0, 1, 1, 0], streak: '4' },
+  { y: 196, cells: [1, 1, 0, 1, 1, 0, 0], streak: '2' },
+  { y: 242, cells: [1, 0, 1, 1, 1, 1, 1], streak: '6' },
+];
+---
+
+<div class={`tool-mockup ${className}`} role="img" aria-label={label || `${variant} tool preview`}>
+  <svg viewBox="0 0 640 420" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto block">
+    <!-- frame -->
+    <rect x="1" y="1" width="638" height="418" rx="18" fill={C.frame} stroke={C.border} stroke-width="1.5" />
+    <!-- top bar -->
+    <path d={`M1 19 a18 18 0 0 1 18 -18 h602 a18 18 0 0 1 18 18 v34 h-638 z`} fill={C.bar} />
+    <circle cx="26" cy="27" r="5" fill={C.subtle} opacity="0.6" />
+    <circle cx="44" cy="27" r="5" fill={C.subtle} opacity="0.6" />
+    <circle cx="62" cy="27" r="5" fill={C.primary} opacity="0.9" />
+    <rect x="92" y="16" width="430" height="22" rx="11" fill={C.screen} stroke={C.border} stroke-width="1" />
+    <text x="112" y="31" font-family="monospace" font-size="12" fill={C.subtle}>{addr}</text>
+    <!-- screen -->
+    <rect x="1" y="53" width="638" height="366" rx="0" fill={C.screen} />
+    <rect x="1" y="402" width="638" height="17" rx="0" fill={C.screen} />
+
+    {variant === 'habit' && (
+      <g>
+        <!-- header -->
+        <text x="36" y="92" font-family="monospace" font-size="11" letter-spacing="2" fill={C.primary}>FREE INTERACTIVE TOOL</text>
+        <text x="36" y="120" font-family="sans-serif" font-weight="700" font-size="26" fill={C.text}>Habit tracker</text>
+        <!-- week completion bar -->
+        <rect x="430" y="100" width="174" height="6" rx="3" fill={C.card} />
+        <rect x="430" y="100" width="118" height="6" rx="3" fill={C.primary} />
+        <text x="430" y="92" font-family="monospace" font-size="10" letter-spacing="1" fill={C.subtle}>WEEK 68%</text>
+
+        <!-- day header -->
+        {['M','T','W','T','F','S','S'].map((d, i) => (
+          <text x={300 + i * 40} y="138" font-family="monospace" font-size="11" fill={C.subtle} text-anchor="middle">{d}</text>
+        ))}
+        <text x="592" y="138" font-family="monospace" font-size="10" fill={C.subtle} text-anchor="middle">🔥</text>
+
+        {rows.map((row) => (
+          <g>
+            <rect x="36" y={row.y} width="20" height="20" rx="6" fill={C.card} stroke={C.border} />
+            <rect x="64" y={row.y + 4} width="120" height="12" rx="6" fill={C.card} />
+            {row.cells.map((on, i) => (
+              on
+                ? <rect x={284 + i * 40} y={row.y - 2} width="24" height="24" rx="7" fill={C.primary} />
+                : <rect x={284 + i * 40} y={row.y - 2} width="24" height="24" rx="7" fill={C.screen} stroke={C.border} />
+            ))}
+            {row.cells.map((on, i) => (
+              on ? <path d={`M${290 + i * 40} ${row.y + 10} l4 4 l8 -8`} stroke={C.ink} stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" /> : null
+            ))}
+            <text x="592" y={row.y + 14} font-family="sans-serif" font-weight="700" font-size="13" fill={C.primary} text-anchor="middle">{row.streak}</text>
+          </g>
+        ))}
+      </g>
+    )}
+
+    {variant === 'focus' && (
+      <g>
+        <text x="320" y="100" font-family="monospace" font-size="11" letter-spacing="2" fill={C.primary} text-anchor="middle">FREE INTERACTIVE TOOL</text>
+        <!-- ring -->
+        <circle cx="320" cy="220" r="84" fill="none" stroke={C.card} stroke-width="10" />
+        <circle cx="320" cy="220" r="84" fill="none" stroke={C.primary} stroke-width="10" stroke-linecap="round"
+          stroke-dasharray="527" stroke-dashoffset="180" transform="rotate(-90 320 220)" />
+        <text x="320" y="230" font-family="sans-serif" font-weight="700" font-size="46" fill={C.text} text-anchor="middle">24:59</text>
+        <text x="320" y="255" font-family="monospace" font-size="11" letter-spacing="3" fill={C.primary} text-anchor="middle">IN FOCUS</text>
+        <!-- stats -->
+        <line x1="200" y1="340" x2="440" y2="340" stroke={C.border} />
+        <text x="265" y="372" font-family="sans-serif" font-weight="700" font-size="22" fill={C.text} text-anchor="middle">3</text>
+        <text x="265" y="390" font-family="monospace" font-size="9" letter-spacing="1" fill={C.subtle} text-anchor="middle">SESSIONS</text>
+        <line x1="320" y1="352" x2="320" y2="384" stroke={C.border} />
+        <text x="375" y="372" font-family="sans-serif" font-weight="700" font-size="22" fill={C.text} text-anchor="middle">75m</text>
+        <text x="375" y="390" font-family="monospace" font-size="9" letter-spacing="1" fill={C.subtle} text-anchor="middle">FOCUSED</text>
+      </g>
+    )}
+
+    {variant === 'planner' && (
+      <g opacity="0.5">
+        <text x="320" y="150" font-family="monospace" font-size="11" letter-spacing="2" fill={C.subtle} text-anchor="middle">COMING SOON</text>
+        {[0,1,2,3,4].map((c) => (
+          <rect x={70 + c * 102} y="180" width="86" height="120" rx="10" fill={C.card} stroke={C.border} />
+        ))}
+        {[0,1,2,3,4].map((c) => (
+          <g>
+            <rect x={82 + c * 102} y="196" width="50" height="8" rx="4" fill={C.border} />
+            <rect x={82 + c * 102} y="216" width="62" height="6" rx="3" fill={C.screen} stroke={C.border} />
+            <rect x={82 + c * 102} y="234" width="62" height="6" rx="3" fill={C.screen} stroke={C.border} />
+          </g>
+        ))}
+      </g>
+    )}
+  </svg>
+</div>
+
+<style>
+  .tool-mockup {
+    border-radius: 18px;
+    box-shadow: 0 30px 70px -28px rgba(0, 0, 0, 0.85);
+    overflow: hidden;
+    line-height: 0;
+  }
+</style>
+</content>

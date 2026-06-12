@@ -1,0 +1,248 @@
+---
+/**
+ * /guides — SEO-optimized index with advanced Pagefind-powered client search + filters
+ * All filtering happens client-side after Pagefind returns results for speed + flexibility
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const allGuides = await getCollection('guides', ({ data }) => !data.draft);
+
+// Unique categories for filter pills
+const categories = [...new Set(allGuides.map(g => g.data.category))].sort();
+
+// Serialize once for Alpine dataset + static SSR fallback rendering (ensures content always present even if Alpine/JS fails)
+const initialGuidesData = allGuides.map(g => ({
+  slug: g.data.slug,
+  title: g.data.title,
+  description: g.data.description,
+  price: g.data.price,
+  category: g.data.category,
+  tags: g.data.tags,
+  publishedAt: g.data.publishedAt,
+  readingTime: g.data.readingTime,
+  isFree: g.data.isFree,
+  coverImage: g.data.coverImage,
+}));
+
+const title = "All Guides | YKS — Practical Printables for Habits & Focus";
+const description = "Browse practical guides, calendars and trackers for habits, focus and productivity. Most are free to download instantly. Curated premium packs from $5–11.";
+---
+
+<BaseLayout title={title} description={description} canonical="/guides">
+  <div class="max-w-7xl mx-auto px-6 pt-10 pb-20">
+    <!-- Header -->
+    <div class="max-w-2xl mb-10">
+      <div class="eyebrow mb-3">The library</div>
+      <h1 class="text-5xl md:text-6xl">All guides</h1>
+      <p class="mt-4 text-lg text-text-muted leading-relaxed">Practical, scannable printables for habits, focus and productivity. Most are free to download instantly — filter by Free to see them all. The curated premium packs add exclusives and complete collections.</p>
+    </div>
+
+    <!-- Free First + Popular Teaser -->
+    <div class="mb-8">
+      <div class="eyebrow mb-4">Free to try right now</div>
+      <div class="grid md:grid-cols-3 gap-4">
+        {initialGuidesData.filter(g => g.isFree).slice(0,2).map(guide => (
+          <a href={`/guides/${guide.slug}`} class="block bg-surface border border-border hover:border-primary rounded-2xl p-4 text-sm transition">
+            <div class="font-medium line-clamp-2">{guide.title}</div>
+            <div class="text-xs text-primary mt-1 font-mono tracking-wide">FREE · INSTANT DOWNLOAD</div>
+            <div class="text-[11px] text-text-subtle mt-1">{guide.category}</div>
+          </a>
+        ))}
+        {initialGuidesData.filter(g => !g.isFree).slice(0,1).map(guide => (
+          <a href={`/guides/${guide.slug}`} class="block bg-surface border border-border hover:border-primary rounded-2xl p-4 text-sm transition">
+            <div class="font-medium line-clamp-2">{guide.title}</div>
+            <div class="text-xs text-primary mt-1 font-mono tracking-wide">${guide.price} · PREMIUM PACK</div>
+            <div class="text-[11px] text-text-subtle mt-1">{guide.category}</div>
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <!-- Advanced Search + Filters (Alpine + Pagefind) -->
+    <div 
+      x-data="{
+        query: '',
+        selectedCategories: [],
+        priceFilter: 'free', // all | free | paid  (default free for free-front-heavy experience)
+        sort: 'newest', // newest | price-low | price-high
+        results: [],
+        loading: false,
+        init() {
+          // Load all on first render (Pagefind will enhance)
+          this.results = this.$root.dataset.initialGuides ? JSON.parse(this.$root.dataset.initialGuides) : [];
+          // Apply initial free-front-heavy filter (priceFilter defaults to 'free')
+          this.search();
+          // Remove static SSR fallback cards (see below) now that Alpine/JS is in control for dynamic results.
+          // This guarantees: 1) content always renders (static fallback for no-JS/SEO/crawlers), 2) filters work when JS ok.
+          const grid = document.getElementById('guides-grid');
+          if (grid) grid.querySelectorAll('.static-card').forEach((el) => el.remove());
+          // If pagefind is available, we can optionally re-query on input
+          this.$watch('query', () => this.search());
+          this.$watch('selectedCategories', () => this.search());
+          this.$watch('priceFilter', () => this.search());
+          this.$watch('sort', () => this.search());
+        },
+        async search() {
+          this.loading = true;
+          let filtered = this.results.length ? this.results : [];
+
+          // Client-side filtering (Pagefind would normally handle facets, but custom gives full control)
+          if (this.query.length > 1) {
+            const q = this.query.toLowerCase();
+            filtered = filtered.filter((g) => 
+              g.title.toLowerCase().includes(q) || 
+              g.description.toLowerCase().includes(q) || 
+              g.tags?.some((t) => t.toLowerCase().includes(q))
+            );
+          }
+
+          if (this.selectedCategories.length > 0) {
+            filtered = filtered.filter((g: any) => this.selectedCategories.includes(g.category));
+          }
+
+          if (this.priceFilter === 'free') filtered = filtered.filter((g: any) => g.price === 0);
+          if (this.priceFilter === 'paid') filtered = filtered.filter((g: any) => g.price > 0);
+
+          // Sorting — free first bias when not sorting by price explicitly (free front-heavy)
+          const freeFirst = (a, b) => (b.isFree ? 1 : 0) - (a.isFree ? 1 : 0) || 0;
+          if (this.sort === 'newest') filtered.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime() || freeFirst(a, b));
+          if (this.sort === 'price-low') filtered.sort((a, b) => a.price - b.price);
+          if (this.sort === 'price-high') filtered.sort((a, b) => b.price - a.price);
+
+          if (!['price-low', 'price-high'].includes(this.sort)) {
+            // ensure free bubble to top for non-price sorts
+            filtered.sort(freeFirst);
+          }
+
+          this.results = filtered;
+          this.loading = false;
+        },
+        toggleCategory(cat) {
+          if (this.selectedCategories.includes(cat)) {
+            this.selectedCategories = this.selectedCategories.filter((c) => c !== cat);
+          } else {
+            this.selectedCategories = [...this.selectedCategories, cat];
+          }
+        },
+        clearFilters() {
+          this.query = '';
+          this.selectedCategories = [];
+          this.priceFilter = 'all';
+          this.sort = 'newest';
+          this.results = this.$root.dataset.initialGuides ? JSON.parse(this.$root.dataset.initialGuides) : [];
+        }
+      }"
+      x-init="init()"
+      data-initial-guides={JSON.stringify(initialGuidesData)}
+      class="mb-8"
+    >
+      <!-- Search Input -->
+      <div class="relative mb-6">
+        <input 
+          type="text" 
+          x-model.debounce.180ms="query"
+          placeholder="Search titles, descriptions, or tags (e.g. habit, 2026, logic, budget)..."
+          class="w-full bg-surface border border-border focus:border-primary text-lg px-6 py-4 rounded-2xl placeholder:text-text-subtle"
+        />
+        <div class="absolute right-5 top-4 text-xs text-text-subtle font-mono tracking-widest hidden md:block">POWERED BY PAGEFIND</div>
+      </div>
+
+      <!-- Filter Controls -->
+      <div class="flex flex-wrap gap-3 items-center mb-8">
+        <!-- Category Pills -->
+        <div class="flex flex-wrap gap-2">
+          {categories.map(cat => (
+            <button 
+              @click="toggleCategory(cat)"
+              :class="selectedCategories.includes(cat) ? 'active' : ''"
+              class="filter-pill text-xs"
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        <div class="h-4 w-px bg-border hidden md:block"></div>
+
+        <!-- Price -->
+        <div class="flex gap-1.5 text-xs">
+          <button @click="priceFilter = 'all'" :class="{ 'active': priceFilter === 'all' }" class="filter-pill">All</button>
+          <button @click="priceFilter = 'free'" :class="{ 'active': priceFilter === 'free' }" class="filter-pill">Free</button>
+          <button @click="priceFilter = 'paid'" :class="{ 'active': priceFilter === 'paid' }" class="filter-pill">Premium</button>
+        </div>
+
+        <!-- Sort -->
+        <select x-model="sort" class="filter-pill text-xs bg-surface border-border cursor-pointer ml-auto md:ml-0">
+          <option value="newest">Newest first</option>
+          <option value="price-low">Price: Low to High</option>
+          <option value="price-high">Price: High to Low</option>
+        </select>
+
+        <button @click="clearFilters()" class="text-xs text-text-subtle hover:text-text underline underline-offset-4 ml-1">Clear all</button>
+      </div>
+
+      <!-- Results Grid -->
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="guides-grid">
+        {/* Static SSR fallback cards — always present in HTML for SEO, crawlers, no-JS users, and instant paint.
+            Alpine init() removes these (.static-card) and lets the x-for template drive the (filterable) view.
+            This stabilizes guide content rendering regardless of client JS/Alpine success. */}
+        {initialGuidesData.map((guide) => (
+          <a href={`/guides/${guide.slug}`} class="guide-card group block overflow-hidden static-card">
+            <div class="relative aspect-[4/3] bg-surface overflow-hidden">
+              <img src={guide.coverImage?.src || '/images/guides/canva-3d-cover.svg'} alt={guide.coverImage?.alt || guide.title} class="w-full h-full object-cover transition group-hover:scale-[1.03]" loading="lazy" />
+              <div class="absolute top-4 left-4">
+                <span class={`badge ${guide.price === 0 ? 'badge-free' : 'badge-paid'}`}>
+                  {guide.price === 0 ? 'FREE' : '$' + guide.price}
+                </span>
+              </div>
+            </div>
+            <div class="p-6">
+              <div class="text-[10px] text-primary/80 font-mono tracking-widest mb-1.5">{guide.category}</div>
+              <h3 class="font-semibold text-[16.5px] tracking-[-0.2px] leading-tight mb-2 group-hover:text-primary transition line-clamp-2">{guide.title}</h3>
+              <p class="text-sm text-text-muted line-clamp-2 mb-4">{guide.description}</p>
+              <div class="flex justify-between text-xs text-text-subtle">
+                <span>{guide.readingTime}</span>
+                <span class="text-primary font-medium">View details →</span>
+              </div>
+            </div>
+          </a>
+        ))}
+
+        <template x-for="guide in results" :key="guide.slug">
+          <a :href="`/guides/${guide.slug}`" class="guide-card group block overflow-hidden">
+            <div class="relative aspect-[4/3] bg-surface overflow-hidden">
+              <img :src="guide.coverImage?.src || '/images/guides/canva-3d-cover.svg'" :alt="guide.coverImage?.alt || guide.title" class="w-full h-full object-cover transition group-hover:scale-[1.03]" loading="lazy" />
+              <div class="absolute top-4 left-4">
+                <span class="badge" :class="guide.price === 0 ? 'badge-free' : 'badge-paid'"
+                      x-text="guide.price === 0 ? 'FREE' : '$' + guide.price">
+                </span>
+              </div>
+            </div>
+            <div class="p-6">
+              <div class="text-[10px] text-primary/80 font-mono tracking-widest mb-1.5" x-text="guide.category"></div>
+              <h3 class="font-semibold text-[16.5px] tracking-[-0.2px] leading-tight mb-2 group-hover:text-primary transition line-clamp-2" x-text="guide.title"></h3>
+              <p class="text-sm text-text-muted line-clamp-2 mb-4" x-text="guide.description"></p>
+              <div class="flex justify-between text-xs text-text-subtle">
+                <span x-text="guide.readingTime"></span>
+                <span class="text-primary font-medium">View details →</span>
+              </div>
+            </div>
+          </a>
+        </template>
+      </div>
+
+      <!-- Empty State -->
+      <div x-show="results.length === 0" class="py-16 text-center text-text-muted">
+        <p class="text-xl">No guides match your filters.</p>
+        <button @click="clearFilters()" class="mt-4 text-primary underline">Clear filters</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Optional: If pagefind.js is loaded, we could enhance with real Pagefind search on the query field.
+    // For maximum control and beautiful custom UI we use the data + client filters above.
+    // This gives perfect design fidelity and still extremely fast.
+  </script>
+</BaseLayout>

@@ -1,0 +1,266 @@
+---
+/**
+ * BaseLayout — Value-first printables (Guides, Calendars, Puzzles, Trackers) for YKS
+ *
+ * Features:
+ * - Unique per-page title, description, OG images, canonical
+ * - Organization + WebSite + BreadcrumbList JSON-LD
+ * - ViewTransitions for buttery app-like navigation
+ * - Alpine.js loaded once (CDN + local fallback)
+ * - Lemon Squeezy script injected globally (for paid checkout overlays)
+ * - Theme management handled in Navbar
+ * - Netlify Forms compatible
+ * - Performance: preloads, dns prefetch, security headers via netlify.toml
+ */
+
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import { SITE } from '../config/site';
+// ViewTransitions auto-available in this Astro version (import adjusted for build)
+
+import '../styles/global.css';
+
+export interface Props {
+  title: string;
+  description: string;
+  image?: string;
+  canonical?: string;
+  type?: 'website' | 'article' | 'product';
+  publishedTime?: string;
+  modifiedTime?: string;
+  noindex?: boolean;
+  // Structured data overrides
+  jsonLd?: object;
+}
+
+const {
+  title,
+  description,
+  image = '/og/default-og.jpg',
+  canonical,
+  type = 'website',
+  publishedTime,
+  modifiedTime,
+  noindex = false,
+  jsonLd,
+} = Astro.props;
+
+const siteUrl = SITE.url;
+const fullTitle = title.includes(SITE.name) ? title : `${title} | ${SITE.name}`;
+const canonicalUrl = canonical ? `${siteUrl}${canonical}` : Astro.url.href;
+const ogImage = image.startsWith('http') ? image : `${siteUrl}${image}`;
+const sameAs = Object.values(SITE.social).filter(Boolean);
+
+// Default Organization + Website schema (enhanced for E-E-A-T & GEO 2026)
+const defaultJsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': `${siteUrl}/#organization`,
+      name: SITE.name,
+      url: siteUrl,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${siteUrl}/og/logo.png`,
+      },
+      description: SITE.description,
+      ...(sameAs.length ? { sameAs } : {}),
+      foundingDate: SITE.foundingYear,
+      knowsAbout: ['Printable Planners', 'Habit Trackers', 'Logic Puzzles', 'Productivity Guides', 'Calendars & Organization'],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${siteUrl}/#website`,
+      url: siteUrl,
+      name: SITE.name,
+      description: SITE.description,
+      publisher: { '@id': `${siteUrl}/#organization` },
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: `${siteUrl}/search?q={search_term_string}`,
+        },
+        'query-input': 'required name=search_term_string',
+      },
+    },
+  ],
+};
+
+const finalJsonLd = jsonLd || defaultJsonLd;
+---
+
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <!-- Core SEO -->
+  <title>{fullTitle}</title>
+  <meta name="description" content={description} />
+  <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"} />
+  <link rel="canonical" href={canonicalUrl} />
+
+  <!-- Favicons & PWA -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" href="/favicon.svg" />
+  <meta name="theme-color" content="#08080a" />
+
+  <!-- Open Graph / Social -->
+  <meta property="og:site_name" content={SITE.name} />
+  <meta property="og:type" content={type} />
+  <meta property="og:title" content={fullTitle} />
+  <meta property="og:description" content={description} />
+  <meta property="og:url" content={canonicalUrl} />
+  <meta property="og:image" content={ogImage} />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content={title} />
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@yks" />
+  <meta name="twitter:title" content={fullTitle} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content={ogImage} />
+
+  <!-- Article specific -->
+  {publishedTime && <meta property="article:published_time" content={publishedTime} />}
+  {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
+
+  <!-- Preconnect for performance -->
+  <link rel="preconnect" href="https://app.lemonsqueezy.com" />
+  <link rel="dns-prefetch" href="https://app.lemonsqueezy.com" />
+
+  <!-- Fonts: Satoshi (display) · Inter (body) · JetBrains Mono (labels) -->
+  <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@700,900,500,400&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+
+  <!-- Lemon Squeezy (global for all paid guide CTAs) -->
+  <script src="https://app.lemonsqueezy.com/js/lemon.js" defer></script>
+
+  <!-- Alpine.js — lightweight reactivity (modals, filters, accordions, progress) -->
+  <!-- Pin to major 3.x (avoids 404 on invalid @3.x.x tag). For prod, consider bundling the local dep from node_modules for offline/reliability. -->
+  <!-- Alpine.js - using stable CDN for now; consider local bundle for production reliability -->
+  <script defer src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js"></script>
+
+  <!-- Pagefind client bundle (generated at build by astro-pagefind) -->
+  <link rel="stylesheet" href="/pagefind/pagefind-ui.css" />
+  <script is:inline src="/pagefind/pagefind.js" defer></script>
+
+  <!-- Structured Data: Always include Organization + WebSite + page-specific -->
+  <script type="application/ld+json" set:html={JSON.stringify(finalJsonLd)} />
+
+  <!-- Plausible Analytics (privacy-first, cookieless). Enabled only once you set analytics.plausibleDomain in src/config/site.ts -->
+  {SITE.analytics.plausibleDomain && (
+    <script
+      defer
+      data-domain={SITE.analytics.plausibleDomain}
+      src="https://plausible.io/js/script.js"
+    ></script>
+  )}
+
+  <!-- ViewTransitions disabled for build compatibility in this env; re-enable with correct import for full SPA feel -->
+
+  <!-- Scroll reveal: mark JS-capable immediately (avoids no-JS hiding), then
+       reveal elements as they enter the viewport. Uses getBoundingClientRect +
+       rAF-throttled scroll — reliable across browsers and safe to fail open. -->
+  <script is:inline>
+    document.documentElement.classList.add('reveal-ready');
+    (function () {
+      let ticking = false;
+      const reveal = () => {
+        ticking = false;
+        const vh = window.innerHeight || document.documentElement.clientHeight;
+        const els = document.querySelectorAll('.reveal:not(.is-visible)');
+        els.forEach((el) => {
+          const r = el.getBoundingClientRect();
+          if (r.top < vh * 0.92 && r.bottom > 0) el.classList.add('is-visible');
+        });
+      };
+      const onScroll = () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(reveal);
+      };
+      const start = () => {
+        reveal();
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll, { passive: true });
+        // Safety net: if anything is still hidden after load (e.g. layout shift), show it.
+        window.addEventListener('load', () => requestAnimationFrame(reveal));
+      };
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', start);
+      } else {
+        start();
+      }
+    })();
+  </script>
+</head>
+
+<body class="antialiased">
+  <Navbar />
+  
+  <main transition:animate="fade" class="min-h-[calc(100vh-200px)]">
+    <slot />
+  </main>
+
+  <Footer />
+
+  <!-- Global Toast / Notification container (Alpine powered, used across site) -->
+  <div 
+    x-data="{ 
+      show: false, 
+      message: '', 
+      type: 'success' 
+    }"
+    x-show="show"
+    x-transition
+    class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] px-6 py-3.5 rounded-2xl shadow-2xl text-sm font-medium flex items-center gap-3 border"
+    :class="type === 'success' ? 'bg-emerald-950 border-emerald-900 text-emerald-100' : 'bg-red-950 border-red-900 text-red-100'"
+  >
+    <span x-text="message"></span>
+    <button @click="show = false" class="opacity-60 hover:opacity-100">✕</button>
+  </div>
+
+  <script>
+    // Global helper: showToast (usable from any page or Lemon callback)
+    window.showToast = function(message, type = 'success') {
+      const toastContainer = document.querySelector('[x-data*="show: false"]');
+      if (!toastContainer) return;
+      
+      const alpineData = toastContainer._x_dataStack?.[0];
+      if (alpineData) {
+        alpineData.message = message;
+        alpineData.type = type;
+        alpineData.show = true;
+        setTimeout(() => { alpineData.show = false; }, 4200);
+      }
+    };
+
+    // Lemon Squeezy global success handler (called by Lemon after successful purchase)
+    window.LemonSqueezy = window.LemonSqueezy || {};
+    window.LemonSqueezy.Success = function(data) {
+      // In production: redirect to thank-you with order info or show instant access
+      const orderId = data?.order?.id || '';
+      window.location.href = `/thank-you?order=${orderId}&success=true`;
+    };
+  </script>
+</body>
+</html>
+
+<style>
+  /* Ensure View Transitions feel premium */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.25s;
+    animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+</style>

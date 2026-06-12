@@ -1,0 +1,78 @@
+---
+/**
+ * Tools hub — free, interactive, browser-based tools.
+ * These are the standout "use it now" value pieces: no signup, run in-browser,
+ * with a natural premium hook (the print-ready packs) on each tool page.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const tools = [
+  {
+    href: '/tools/habit-tracker',
+    emoji: '🔥',
+    name: 'Habit Tracker',
+    desc: 'Tick off your week, build streaks, see completion at a glance. Saves to your browser. Print a clean copy anytime.',
+    tag: 'Live',
+  },
+  {
+    href: '/tools/focus-timer',
+    emoji: '⏱️',
+    name: 'Focus Timer',
+    desc: 'Distraction-free focus sprints with built-in breaks and a daily session count. Deep work, one block at a time.',
+    tag: 'Live',
+  },
+  {
+    href: '#',
+    emoji: '🗓️',
+    name: 'Weekly Planner',
+    desc: 'Time-block your week in a clean grid and export it. In the workshop — drop your email to get it first.',
+    tag: 'Soon',
+    soon: true,
+  },
+];
+---
+
+<BaseLayout
+  title="Free Tools — Use Them Right in Your Browser"
+  description="Genuinely useful, no-signup tools you can use right now: a habit tracker, a focus timer, and more. Free forever, runs entirely in your browser."
+  canonical="/tools"
+>
+  <section class="relative overflow-hidden border-b border-border">
+    <div class="absolute inset-0 bg-grid pointer-events-none"></div>
+    <div class="relative max-w-4xl mx-auto px-6 pt-20 pb-16 text-center">
+      <div class="chip mb-7"><span class="dot"></span> No signup · runs in your browser</div>
+      <h1 class="text-[clamp(2.5rem,7vw,4.5rem)] leading-[0.98] mb-5">
+        Tools you can<br /><span class="accent-text">use right now.</span>
+      </h1>
+      <p class="max-w-xl mx-auto text-lg text-text-muted leading-relaxed">
+        Not another PDF you forget about — real, interactive tools that work in your browser and save your progress. Free forever. The print-ready packs are there if you want to go all-in.
+      </p>
+    </div>
+  </section>
+
+  <section class="max-w-5xl mx-auto px-6 py-16">
+    <div class="grid md:grid-cols-2 gap-5">
+      {tools.map(t => (
+        <a
+          href={t.href}
+          class={`guide-card group p-7 flex flex-col ${t.soon ? 'pointer-events-none opacity-70' : ''}`}
+        >
+          <div class="flex items-start justify-between mb-5">
+            <div class="text-3xl">{t.emoji}</div>
+            <span class={`badge ${t.soon ? 'badge-paid' : 'badge-free'}`}>{t.tag}</span>
+          </div>
+          <h2 class="font-display font-semibold text-xl tracking-tight mb-2 group-hover:text-primary transition-colors">{t.name}</h2>
+          <p class="text-sm text-text-muted leading-relaxed flex-1">{t.desc}</p>
+          {!t.soon && (
+            <span class="mt-5 font-mono text-[11px] tracking-wider text-primary inline-flex items-center gap-1.5">OPEN TOOL <span aria-hidden="true">→</span></span>
+          )}
+        </a>
+      ))}
+    </div>
+
+    <div class="mt-12 text-center text-sm text-text-muted">
+      Want a tool we haven't built yet? <a href="/contact" class="text-primary underline underline-offset-4">Tell us what to make next</a>.
+    </div>
+  </section>
+</BaseLayout>
+</content>

@@ -1,0 +1,19 @@
+<svg width="1200" height="1600" viewBox="0 0 1200 1600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0a0a0f"/><stop offset="100%" stop-color="#15151c"/></linearGradient>
+    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#a855f7"/></linearGradient>
+  </defs>
+  <rect width="1200" height="1600" fill="url(#bg2)"/>
+  <g opacity="0.06"><path d="M0 120h1200M0 280h1200M0 440h1200M0 600h1200M0 760h1200M0 920h1200M0 1080h1200M0 1240h1200M0 1400h1200" stroke="#fff" stroke-width="1.5"/></g>
+  <!-- Empire lattice / scaling structure -->
+  <g transform="translate(600 820)" stroke="url(#g2)" stroke-width="11" opacity="0.85">
+    <path d="M-210 -260 L0 -380 L210 -260 L210 260 L0 380 L-210 260 Z"/>
+    <path d="M-140 -180 L0 -260 L140 -180 L140 180 L0 260 L-140 180 Z"/>
+    <path d="M-70 -95 L0 -135 L70 -95 L70 95 L0 135 L-70 95 Z"/>
+  </g>
+  <text x="600" y="395" text-anchor="middle" fill="#f1f1f5" font-family="Inter, system-ui" font-size="38" font-weight="700" letter-spacing="-1.5">PHANTOMFORGE</text>
+  <text x="600" y="445" text-anchor="middle" fill="#c4b5fd" font-family="Inter, system-ui" font-size="52" font-weight="700" letter-spacing="-3.5">EMPIRE</text>
+  <text x="600" y="500" text-anchor="middle" fill="#71717a" font-family="Inter, system-ui" font-size="15" letter-spacing="6">0 → 500+ ORDERS • $47</text>
+  <rect x="480" y="530" width="240" height="1.5" fill="#6366f1"/>
+  <text x="600" y="1395" text-anchor="middle" fill="#52525b" font-family="monospace" font-size="13" letter-spacing="2">BATTLE-TESTED SYSTEMS • 68 PAGES</text>
+</svg>

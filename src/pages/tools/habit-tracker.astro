@@ -1,0 +1,325 @@
+---
+/**
+ * Habit Tracker — free interactive browser tool.
+ * Add habits, tick days in a live week grid, watch streaks build. Persists to
+ * localStorage (no signup). Free print export; premium hook = full annual pack.
+ * Powered by Alpine.js, matching the site's zero-heavy-JS approach.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Mascot from '../../components/Mascot.astro';
+
+// Starter suggestions shown in the empty state (one tap to add).
+const starters = [
+  { emoji: '💧', name: 'Drink water' },
+  { emoji: '📖', name: 'Read 10 pages' },
+  { emoji: '🏃', name: 'Move my body' },
+  { emoji: '🧘', name: 'Breathe / meditate' },
+  { emoji: '🌙', name: 'Lights out by 11' },
+];
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Free Habit Tracker',
+  applicationCategory: 'LifestyleApplication',
+  operatingSystem: 'Any (web browser)',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  description:
+    'A free, no-signup habit tracker you use right in your browser. Build streaks, see weekly completion, and print a clean copy.',
+};
+---
+
+<BaseLayout
+  title="Free Habit Tracker — Build Streaks in Your Browser"
+  description="A genuinely useful, no-signup habit tracker. Add habits, tick off your week, watch streaks build, and print a clean copy. Free forever — runs entirely in your browser."
+  canonical="/tools/habit-tracker"
+  jsonLd={jsonLd}
+>
+  <section class="max-w-5xl mx-auto px-6 pt-12 pb-6">
+    <a href="/tools" class="font-mono text-[11px] tracking-wider text-text-subtle hover:text-primary transition-colors">← All tools</a>
+    <div class="mt-5 flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <div class="eyebrow mb-3">Free interactive tool</div>
+        <h1 class="text-4xl md:text-5xl">Habit tracker</h1>
+        <p class="mt-3 text-text-muted max-w-xl leading-relaxed">
+          Tick off your week, watch streaks build. Saves to this browser — no signup, no account, nothing leaves your device.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="max-w-5xl mx-auto px-6 pb-24" x-data="habitTracker" x-cloak>
+    <!-- toolbar -->
+    <div class="flex flex-wrap items-center gap-3 mb-6 no-print">
+      <form @submit.prevent="addHabit()" class="flex-1 min-w-[240px] flex gap-2">
+        <input
+          x-model="draft"
+          type="text"
+          maxlength="40"
+          placeholder="Add a habit…"
+          class="flex-1 bg-bg border border-border focus:border-primary rounded-full px-5 py-2.5 text-sm placeholder:text-text-subtle outline-none transition-colors"
+        />
+        <button type="submit" class="btn btn-primary text-sm px-5 py-2.5">Add</button>
+      </form>
+      <div class="flex items-center gap-1.5 font-mono text-[11px] text-text-subtle">
+        <button @click="shiftWeek(-1)" class="share-btn !w-9 !h-9" aria-label="Previous week">‹</button>
+        <span class="px-2 whitespace-nowrap" x-text="weekLabel"></span>
+        <button @click="shiftWeek(1)" class="share-btn !w-9 !h-9" aria-label="Next week">›</button>
+        <button @click="thisWeek()" x-show="weekOffset !== 0" class="ml-1 text-primary hover:underline" x-cloak>Today</button>
+      </div>
+    </div>
+
+    <!-- empty state -->
+    <template x-if="habits.length === 0">
+      <div class="surface-card p-10 text-center no-print">
+        <Mascot pose="default" class="w-16 h-16 mx-auto mb-4 text-primary" title="Sprout cheering you on" />
+        <h2 class="font-display font-semibold text-xl mb-2">Start with one small habit</h2>
+        <p class="text-text-muted text-sm mb-6 max-w-sm mx-auto">Pick a starter or type your own above. Consistency beats intensity — one habit, every day.</p>
+        <div class="flex flex-wrap gap-2 justify-center">
+          <template x-for="s in starters" :key="s.name">
+            <button @click="addHabit(s.name, s.emoji)" class="filter-pill" x-text="s.emoji + ' ' + s.name"></button>
+          </template>
+        </div>
+      </div>
+    </template>
+
+    <!-- the grid -->
+    <template x-if="habits.length > 0">
+      <div class="surface-card overflow-hidden" id="tracker-sheet">
+        <!-- week stats -->
+        <div class="flex items-center justify-between px-5 py-4 border-b border-border bg-bg-elevated">
+          <div class="font-mono text-[11px] tracking-wider text-text-subtle uppercase">Week completion</div>
+          <div class="flex items-center gap-3">
+            <div class="w-32 h-1.5 rounded-full bg-surface overflow-hidden">
+              <div class="h-full bg-primary transition-all duration-500" :style="`width:${weekPct}%`"></div>
+            </div>
+            <span class="font-display font-bold tabular-nums text-sm" x-text="weekPct + '%'"></span>
+          </div>
+        </div>
+
+        <!-- header row -->
+        <div class="grid items-center" :style="gridCols">
+          <div class="px-5 py-3 font-mono text-[10px] tracking-wider text-text-subtle uppercase">Habit</div>
+          <template x-for="(d, i) in week" :key="i">
+            <div class="text-center py-3" :class="d.isToday ? 'text-primary' : 'text-text-subtle'">
+              <div class="font-mono text-[10px] tracking-wider uppercase" x-text="d.dow"></div>
+              <div class="font-display font-semibold text-sm tabular-nums" x-text="d.day"></div>
+            </div>
+          </template>
+          <div class="text-center py-3 font-mono text-[10px] tracking-wider text-text-subtle uppercase">Streak</div>
+        </div>
+
+        <!-- habit rows -->
+        <template x-for="h in habits" :key="h.id">
+          <div class="grid items-center border-t border-border group" :style="gridCols">
+            <div class="px-5 py-3.5 flex items-center gap-2 min-w-0">
+              <span x-text="h.emoji" class="shrink-0"></span>
+              <span class="text-sm truncate" x-text="h.name"></span>
+              <button @click="removeHabit(h.id)" class="no-print ml-auto opacity-0 group-hover:opacity-100 text-text-subtle hover:text-red-400 transition-opacity text-xs px-1" aria-label="Remove habit">✕</button>
+            </div>
+            <template x-for="(d, i) in week" :key="i">
+              <div class="flex justify-center py-2">
+                <button
+                  @click="toggle(h.id, d.iso)"
+                  class="cell"
+                  :class="isDone(h.id, d.iso) ? 'cell-on' : ''"
+                  :aria-pressed="isDone(h.id, d.iso)"
+                  :aria-label="`${h.name} on ${d.iso}`"
+                >
+                  <svg x-show="isDone(h.id, d.iso)" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4 4 9.5-9.5"/></svg>
+                </button>
+              </div>
+            </template>
+            <div class="text-center py-2">
+              <span class="inline-flex items-center gap-1 font-display font-bold text-sm tabular-nums" :class="streak(h.id) > 0 ? 'text-primary' : 'text-text-subtle'">
+                <span x-show="streak(h.id) > 0">🔥</span><span x-text="streak(h.id)"></span>
+              </span>
+            </div>
+          </div>
+        </template>
+      </div>
+    </template>
+
+    <!-- actions -->
+    <div class="mt-6 flex flex-wrap items-center gap-3 no-print" x-show="habits.length > 0">
+      <button @click="print()" class="btn btn-secondary text-sm">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"/></svg>
+        Print this week
+      </button>
+      <button @click="clearAll()" class="btn btn-ghost text-sm">Reset all</button>
+      <span class="font-mono text-[10px] text-text-subtle ml-auto">Saved automatically to this browser</span>
+    </div>
+
+    <!-- premium hook -->
+    <div class="mt-10 surface-card relative overflow-hidden p-8 md:p-10 no-print">
+      <div class="absolute -top-20 right-0 w-[360px] h-[200px] glow-accent pointer-events-none"></div>
+      <div class="relative md:flex items-center justify-between gap-8">
+        <div class="max-w-lg">
+          <div class="eyebrow mb-3">Go further</div>
+          <h2 class="text-2xl md:text-3xl mb-3">Want it on paper, all year?</h2>
+          <p class="text-text-muted leading-relaxed text-[15px]">
+            This tracker is yours free, forever. If you love planning on paper, the premium pack gives you a print-ready 12-month habit system — monthly grids, streak calendars, review pages and matching trackers in one beautiful PDF.
+          </p>
+        </div>
+        <a href="/bundles" class="btn btn-primary mt-5 md:mt-0 whitespace-nowrap shrink-0">See the print pack →</a>
+      </div>
+    </div>
+  </section>
+
+  <script is:inline>
+    document.addEventListener('alpine:init', () => {
+      const KEY = 'yks:habits:v1';
+      const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const iso = (d) => d.toISOString().slice(0, 10);
+      // Monday-start week containing today, offset by `off` weeks.
+      const weekDates = (off) => {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const dow = (now.getDay() + 6) % 7; // 0 = Mon
+        const monday = new Date(now);
+        monday.setDate(now.getDate() - dow + off * 7);
+        return Array.from({ length: 7 }, (_, i) => {
+          const d = new Date(monday);
+          d.setDate(monday.getDate() + i);
+          return d;
+        });
+      };
+
+      window.Alpine.data('habitTracker', () => ({
+        draft: '',
+        habits: [],
+        // done: { [habitId]: { [iso]: true } }
+        done: {},
+        weekOffset: 0,
+        starters: [
+          { emoji: '💧', name: 'Drink water' },
+          { emoji: '📖', name: 'Read 10 pages' },
+          { emoji: '🏃', name: 'Move my body' },
+          { emoji: '🧘', name: 'Breathe / meditate' },
+          { emoji: '🌙', name: 'Lights out by 11' },
+        ],
+
+        init() {
+          try {
+            const raw = localStorage.getItem(KEY);
+            if (raw) {
+              const d = JSON.parse(raw);
+              this.habits = d.habits || [];
+              this.done = d.done || {};
+            }
+          } catch (e) { /* ignore corrupt state */ }
+          this.$watch('habits', () => this.save());
+          this.$watch('done', () => this.save());
+        },
+
+        save() {
+          try {
+            localStorage.setItem(KEY, JSON.stringify({ habits: this.habits, done: this.done }));
+          } catch (e) { /* storage may be unavailable */ }
+        },
+
+        get week() {
+          const today = iso(new Date());
+          return weekDates(this.weekOffset).map((d) => ({
+            iso: iso(d),
+            dow: DOW[(d.getDay() + 6) % 7],
+            day: d.getDate(),
+            isToday: iso(d) === today,
+          }));
+        },
+
+        get gridCols() {
+          return 'grid-template-columns: minmax(120px, 1.6fr) repeat(7, 1fr) 64px';
+        },
+
+        get weekLabel() {
+          const days = this.week;
+          const a = new Date(days[0].iso), b = new Date(days[6].iso);
+          const m = (x) => x.toLocaleDateString('en-US', { month: 'short' });
+          return `${m(a)} ${a.getDate()} – ${m(b)} ${b.getDate()}`;
+        },
+
+        get weekPct() {
+          if (this.habits.length === 0) return 0;
+          let hit = 0;
+          for (const h of this.habits)
+            for (const d of this.week) if (this.isDone(h.id, d.iso)) hit++;
+          return Math.round((hit / (this.habits.length * 7)) * 100);
+        },
+
+        addHabit(name, emoji) {
+          const n = (name || this.draft).trim();
+          if (!n) return;
+          this.habits.push({ id: 'h' + Date.now() + Math.random().toString(36).slice(2, 6), name: n, emoji: emoji || '✅' });
+          this.draft = '';
+        },
+
+        removeHabit(id) {
+          this.habits = this.habits.filter((h) => h.id !== id);
+          delete this.done[id];
+        },
+
+        isDone(id, day) {
+          return !!(this.done[id] && this.done[id][day]);
+        },
+
+        toggle(id, day) {
+          if (!this.done[id]) this.done[id] = {};
+          if (this.done[id][day]) delete this.done[id][day];
+          else this.done[id][day] = true;
+          this.done = { ...this.done };
+        },
+
+        // Consecutive completed days ending today (or yesterday if today not yet ticked).
+        streak(id) {
+          const map = this.done[id];
+          if (!map) return 0;
+          let count = 0;
+          const d = new Date(); d.setHours(0, 0, 0, 0);
+          if (!map[iso(d)]) d.setDate(d.getDate() - 1); // grace for "not done yet today"
+          while (map[iso(d)]) { count++; d.setDate(d.getDate() - 1); }
+          return count;
+        },
+
+        shiftWeek(n) { this.weekOffset += n; },
+        thisWeek() { this.weekOffset = 0; },
+        print() { window.print(); },
+        clearAll() {
+          if (!confirm('Clear all habits and history from this browser?')) return;
+          this.habits = []; this.done = {};
+        },
+      }));
+    });
+  </script>
+
+  <style>
+    .cell {
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      border: 1px solid var(--color-border);
+      background: var(--color-bg);
+      color: #0a0a0b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.12s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.12s ease, border-color 0.12s ease;
+    }
+    .cell:hover { border-color: var(--color-primary); transform: scale(1.08); }
+    .cell-on { background: var(--color-primary); border-color: var(--color-primary); }
+    .cell:active { transform: scale(0.92); }
+
+    @media print {
+      .no-print { display: none !important; }
+      #tracker-sheet { border-color: #ccc; }
+      .cell { border-color: #999; }
+      .cell-on { background: #000 !important; border-color: #000 !important; color: #fff; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .cell, .cell:hover, .cell:active { transition: none; transform: none; }
+    }
+  </style>
+</BaseLayout>
+</content>
+</invoke>

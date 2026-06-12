@@ -1,0 +1,79 @@
+---
+/**
+ * /pro/unlock — members paste the license key Lemon Squeezy emailed them.
+ * Posts to the pro-login function, which validates it and sets the membership
+ * cookie; on success we go to /pro/library.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { PRO } from '../../config/pro';
+---
+
+<BaseLayout
+  title={`Unlock ${PRO.name}`}
+  description="Enter your YKS Pro license key to unlock your member library."
+  canonical="/pro/unlock"
+  noindex={true}
+>
+  <section class="max-w-md mx-auto px-6 py-24" data-pagefind-ignore="all">
+    <div class="surface-card p-8 md:p-10" x-data="proUnlock">
+      <div class="eyebrow mb-3">{PRO.name} members</div>
+      <h1 class="text-3xl mb-2">Unlock your library</h1>
+      <p class="text-text-muted text-sm leading-relaxed mb-7">Paste the license key from your welcome email. We'll remember this browser so you only do it once.</p>
+
+      <form @submit.prevent="submit()">
+        <input
+          x-model="key"
+          type="text"
+          placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+          class="w-full bg-bg border border-border focus:border-primary rounded-full px-5 py-3 text-sm font-mono placeholder:text-text-subtle outline-none transition-colors"
+          :disabled="loading"
+          autocomplete="off"
+        />
+        <button type="submit" class="btn btn-primary w-full justify-center mt-3 py-3.5" :disabled="loading">
+          <span x-show="!loading">Unlock my library</span>
+          <span x-show="loading" x-cloak>Checking…</span>
+        </button>
+      </form>
+
+      <p x-show="error" x-cloak x-text="error" class="text-sm text-red-400 mt-3 text-center"></p>
+
+      <div class="mt-7 pt-6 border-t border-border text-center text-sm text-text-muted">
+        Not a member yet? <a href="/pro" class="text-primary underline underline-offset-4">See {PRO.name} →</a>
+      </div>
+    </div>
+  </section>
+
+  <script is:inline>
+    document.addEventListener('alpine:init', () => {
+      window.Alpine.data('proUnlock', () => ({
+        key: '',
+        loading: false,
+        error: '',
+        async submit() {
+          this.error = '';
+          if (!this.key.trim()) { this.error = 'Enter your license key.'; return; }
+          this.loading = true;
+          try {
+            const res = await fetch('/.netlify/functions/pro-login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ license_key: this.key.trim() }),
+            });
+            const data = await res.json();
+            if (data.ok) {
+              const params = new URLSearchParams(location.search);
+              location.href = params.get('from') || '/pro/library';
+            } else {
+              this.error = data.error || 'That key did not work.';
+            }
+          } catch (e) {
+            this.error = 'Something went wrong. Please try again.';
+          } finally {
+            this.loading = false;
+          }
+        },
+      }));
+    });
+  </script>
+</BaseLayout>
+</content>

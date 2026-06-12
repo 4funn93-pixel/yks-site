@@ -1,0 +1,52 @@
+---
+/**
+ * Lemon Squeezy Buy Button
+ * - Uses official Lemon.js overlay for beautiful hosted checkout
+ * - Handles both variantId and direct checkoutUrl
+ * - Shows guarantee microcopy
+ */
+export interface Props {
+  variantId?: string;
+  checkoutUrl?: string;
+  price: number;
+  title: string;
+  className?: string;
+  label?: string; // e.g. "Download High-Quality PDF" or "Order Printed Version (Shipped)"
+  isPrint?: boolean; // changes microcopy
+}
+
+const { variantId, checkoutUrl, price, title, className = '', label, isPrint = false } = Astro.props;
+
+const isConfigured = variantId || checkoutUrl;
+const buttonLabel = label || (isPrint ? `Order Printed Version — $${price}` : `Buy High-Quality PDF — $${price}`);
+---
+
+<button
+  type="button"
+  data-ls-variant={variantId}
+  data-ls-checkout-url={checkoutUrl}
+  onclick={`window.LemonSqueezy && window.LemonSqueezy.Checkout && (window.LemonSqueezy.Checkout.open({ ${variantId ? `variantId: '${variantId}'` : `checkoutUrl: '${checkoutUrl}'`} })); window.showToast && window.showToast('Opening secure checkout...', 'success');`}
+  class={`btn btn-primary w-full sm:w-auto justify-center text-base py-4 px-9 shadow-xl shadow-primary/30 ${className}`}
+  disabled={!isConfigured}
+>
+  {buttonLabel}
+</button>
+
+{!isConfigured && (
+  <p class="text-xs text-amber-400 mt-2 text-center">Checkout temporarily unavailable — contact us</p>
+)}
+
+<div class="mt-3 text-center text-[11px] text-text-subtle space-y-0.5">
+  <div>✓ 30-day money-back guarantee</div>
+  {isPrint ? (
+    <>
+      <div>✓ High-quality print on premium paper</div>
+      <div>✓ Ships within 3-7 business days</div>
+    </>
+  ) : (
+    <>
+      <div>✓ Instant email delivery &lt; 60 seconds</div>
+      <div>✓ Secure checkout via Lemon Squeezy</div>
+    </>
+  )}
+</div>

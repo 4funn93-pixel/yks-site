@@ -1,0 +1,32 @@
+---
+/**
+ * Reusable MDX callout box — premium, scannable, accessible
+ * Usage in .mdx: <Callout type="tip|warning|success">content</Callout>
+ */
+export interface Props {
+  type?: 'tip' | 'warning' | 'insight' | 'success';
+}
+
+const { type = 'insight' } = Astro.props;
+
+const styles = {
+  tip: 'border-l-[#6366f1] bg-[#6366f110]',
+  warning: 'border-l-amber-500 bg-amber-500/10',
+  insight: 'border-l-[var(--color-secondary)] bg-[#a855f710]',
+  success: 'border-l-emerald-500 bg-emerald-500/10',
+};
+---
+
+<div class={`callout ${styles[type]} not-prose`}>
+  <div class="flex gap-3">
+    <div class="font-mono text-xs tracking-[1.5px] font-semibold uppercase mt-0.5 shrink-0 text-primary">
+      {type === 'tip' && 'PRO TIP'}
+      {type === 'warning' && 'CAUTION'}
+      {type === 'insight' && 'INSIGHT'}
+      {type === 'success' && 'RESULT'}
+    </div>
+    <div class="prose prose-invert text-[15px] text-text leading-relaxed">
+      <slot />
+    </div>
+  </div>
+</div>

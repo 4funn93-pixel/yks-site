@@ -1,0 +1,44 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const type = Astro.url.searchParams.get('type') || 'general';
+const success = Astro.url.searchParams.get('success') === 'true';
+---
+
+<BaseLayout 
+  title="Thank You — YKS" 
+  description="Confirmation and next steps."
+  canonical="/thank-you"
+  noindex={true}
+>
+  <div class="max-w-lg mx-auto px-6 py-16 text-center">
+    {type === 'newsletter' && (
+      <>
+        <div class="text-5xl mb-6">📬</div>
+        <h1 class="text-4xl tracking-tight font-semibold mb-3">You're in.</h1>
+        <p class="text-lg text-text-muted">Check your inbox for the free guide + your first weekly systems email.</p>
+        <p class="mt-6 text-sm text-text-subtle">While you wait, explore the <a href="/guides" class="text-primary">full guide catalog →</a></p>
+      </>
+    )}
+
+    {type === 'contact' && (
+      <>
+        <h1 class="text-4xl tracking-tight font-semibold mb-3">Message received.</h1>
+        <p class="text-text-muted">Thank you. We'll reply personally within 48 hours.</p>
+      </>
+    )}
+
+    {success && (
+      <>
+        <div class="text-5xl mb-6">🎉</div>
+        <h1 class="text-4xl tracking-tight font-semibold mb-3">Purchase confirmed.</h1>
+        <p class="text-lg">Your guide has been emailed to you (check spam if you don't see it in 60 seconds).</p>
+        <p class="mt-4 text-sm">Welcome to the precision club. Implement one thing today.</p>
+      </>
+    )}
+
+    <div class="mt-12">
+      <a href="/" class="btn btn-secondary">Back to homepage</a>
+    </div>
+  </div>
+</BaseLayout>

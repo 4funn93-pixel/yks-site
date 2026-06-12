@@ -1,0 +1,75 @@
+---
+/**
+ * Premium, trustworthy footer
+ * Legal, social (X primary), subtle brand note
+ */
+import { SITE } from '../config/site';
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="border-t border-[var(--color-border)] bg-[var(--color-bg-elevated)] mt-24">
+  <div class="mx-auto max-w-7xl px-6 py-16">
+    <div class="grid md:grid-cols-12 gap-y-12">
+      <!-- Brand -->
+      <div class="md:col-span-5">
+        <a href="/" class="flex items-center gap-2.5 mb-5">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--gradient-mark)">
+            <span class="text-[#0a0a0b] text-[13px] font-bold tracking-tight">Y</span>
+          </div>
+          <span class="font-display font-bold text-xl tracking-[-0.04em]">YKS</span>
+        </a>
+        <p class="max-w-sm text-sm text-text-muted leading-relaxed">
+          Beautifully made guides, calendars & trackers that actually get used. Most of the library is free, forever.
+        </p>
+        <div class="flex gap-4 mt-6">
+          {SITE.social.x && (
+            <a href={SITE.social.x} target="_blank" rel="noopener" aria-label="Follow on X"
+               class="w-9 h-9 rounded-full border border-border flex items-center justify-center hover:border-primary hover:text-primary transition-colors">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25l-7.451 8.52L4.5 2.25H1.25l7.2 8.23L1.25 21.75h3.3l6.25-7.15 5.55 7.15h3.25l-7.4-8.47 7.65-8.78h-3.05z"/></svg>
+            </a>
+          )}
+          {SITE.social.linkedin && (
+            <a href={SITE.social.linkedin} target="_blank" rel="noopener" aria-label="LinkedIn"
+               class="w-9 h-9 rounded-full border border-border flex items-center justify-center hover:border-primary hover:text-primary transition-colors">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26 3.26 3.26 0 00-3.26 3.26v5.3h-2.5v-9h2.5v1.2a4.5 4.5 0 014-2.2 4.3 4.3 0 014.3 4.3v5.7h-2.5zM6.5 8.5a1.75 1.75 0 110-3.5 1.75 1.75 0 010 3.5zM8 18.5v-9H5v9h3z"/></svg>
+            </a>
+          )}
+        </div>
+      </div>
+
+      <!-- Links -->
+      <div class="md:col-span-3 md:pl-6">
+        <div class="text-xs font-semibold tracking-widest text-text-subtle mb-4">EXPLORE</div>
+        <ul class="space-y-2.5 text-sm">
+          <li><a href="/guides" class="hover:text-primary">All Guides</a></li>
+          <li><a href="/blog" class="hover:text-primary">Insights &amp; Tutorials</a></li>
+          <li><a href="/about" class="hover:text-primary">Our Story</a></li>
+          <li><a href="/faq" class="hover:text-primary">FAQ</a></li>
+          <li><a href="/contact" class="hover:text-primary">Contact</a></li>
+          <li><a href="/admin" class="text-xs text-text-subtle hover:text-primary">Admin</a></li>
+        </ul>
+      </div>
+
+      <div class="md:col-span-4">
+        <div class="text-xs font-semibold tracking-widest text-text-subtle mb-4">LEGAL &amp; TRUST</div>
+        <ul class="space-y-2.5 text-sm">
+          <li><a href="/privacy" class="hover:text-primary">Privacy Policy</a></li>
+          <li><a href="/terms" class="hover:text-primary">Terms of Service</a></li>
+          <li><a href="/refund-policy" class="hover:text-primary">Refund Policy (Digital Goods)</a></li>
+          <li class="pt-1 text-xs text-text-subtle">30-day money-back guarantee on all paid guides.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-16 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-y-3 text-xs text-text-subtle">
+      <div>
+        © {currentYear} YKS. All rights reserved. Made with precision.
+      </div>
+      <div class="flex items-center gap-2">
+        Built with <a href="https://astro.build" target="_blank" class="hover:text-primary underline underline-offset-2">Astro</a> + discipline.
+        <span class="hidden sm:inline">•</span> 
+        <span class="text-[10px] font-mono tracking-widest">v1.0</span>
+      </div>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,28 @@
+---
+/**
+ * Free PDF Download Button — works with public/downloads/
+ * Includes Netlify Form secondary CTA for email capture
+ */
+export interface Props {
+  filename: string;
+  title: string;
+}
+
+const { filename, title } = Astro.props;
+// Support both legacy "name.pdf" and new "/downloads/name.pdf" (from admin uploads)
+const downloadPath = filename.startsWith('/') ? filename : `/downloads/${filename}`;
+const downloadName = filename.includes('/') ? filename.split('/').pop()! : filename;
+---
+
+<div class="space-y-3">
+  <a 
+    href={downloadPath}
+    download={downloadName}
+    class="btn btn-primary w-full sm:w-auto justify-center text-base py-4 px-10 shadow-xl"
+    onclick="window.showToast && window.showToast('Thank you! Your download is starting...', 'success');"
+  >
+    Download Free High-Quality PDF Instantly
+  </a>
+
+  <p class="text-center text-xs text-text-subtle">No signup required for the PDF. <a href="#lead-magnet" class="underline hover:text-primary">Get the weekly creator systems email too →</a></p>
+</div>

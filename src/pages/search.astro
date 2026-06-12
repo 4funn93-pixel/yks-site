@@ -1,0 +1,65 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Search"
+  description="Search every guide, calendar, tracker and article on the site."
+  canonical="/search"
+>
+  <section class="max-w-3xl mx-auto px-6 pt-16 pb-24 min-h-[60vh]">
+    <div class="eyebrow mb-3">Search</div>
+    <h1 class="text-4xl md:text-5xl mb-3">Find anything</h1>
+    <p class="text-text-muted leading-relaxed mb-8">Search across every guide, calendar, tracker and blog post.</p>
+
+    <div id="search" class="pagefind-wrapper"></div>
+
+    <noscript>
+      <p class="text-text-muted">Search needs JavaScript enabled. You can also <a href="/guides" class="text-primary underline">browse the library</a>.</p>
+    </noscript>
+  </section>
+
+  <!-- Pagefind UI bundle (generated at build into /pagefind). Loaded only on this page. -->
+  <link rel="stylesheet" href="/pagefind/pagefind-ui.css" />
+  <script is:inline src="/pagefind/pagefind-ui.js"></script>
+  <script is:inline>
+    function initPagefind() {
+      if (typeof PagefindUI === 'undefined') {
+        // Index is generated at build time; during `astro dev` it may not exist yet.
+        const el = document.getElementById('search');
+        if (el) el.innerHTML = '<p style="color:var(--color-text-muted)">Search is available on the built/deployed site.</p>';
+        return;
+      }
+      const params = new URLSearchParams(window.location.search);
+      const ui = new PagefindUI({
+        element: '#search',
+        showSubResults: true,
+        showImages: false,
+        resetStyles: false,
+      });
+      const q = params.get('q');
+      if (q) {
+        const input = document.querySelector('#search input[type="text"]');
+        if (input) { input.value = q; ui.triggerSearch(q); }
+      }
+    }
+    if (document.readyState !== 'loading') initPagefind();
+    else document.addEventListener('DOMContentLoaded', initPagefind);
+  </script>
+
+  <style is:global>
+    /* Theme the Pagefind UI to match the editorial dark system */
+    .pagefind-ui {
+      --pagefind-ui-primary: var(--color-primary);
+      --pagefind-ui-text: var(--color-text);
+      --pagefind-ui-background: var(--color-bg-card);
+      --pagefind-ui-border: var(--color-border);
+      --pagefind-ui-tag: var(--color-surface);
+      --pagefind-ui-border-width: 1px;
+      --pagefind-ui-border-radius: 12px;
+      --pagefind-ui-font: var(--font-sans);
+    }
+    .pagefind-ui__search-input { background: var(--color-bg-card); }
+    .pagefind-ui__result { border-top: 1px solid var(--color-border); }
+  </style>
+</BaseLayout>

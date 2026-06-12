@@ -1,0 +1,145 @@
+---
+/**
+ * YKS Pro — the membership sales page.
+ * Monthly/yearly toggle, free-vs-Pro comparison, configurable Lemon Squeezy
+ * subscription checkout. Falls back to a "launching soon" capture when no
+ * checkout URL is set yet (PRO_LIVE === false).
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { PRO, PRO_LIVE } from '../../config/pro';
+
+const yearlyPerMonth = Math.round((PRO.priceYearly / 12) * 100) / 100;
+
+const comparison = [
+  { feature: 'The free library (90% of everything)', free: true, pro: true },
+  { feature: 'Standard-resolution PDFs', free: true, pro: true },
+  { feature: 'Interactive tools (tracker, timer…)', free: true, pro: true },
+  { feature: 'High-resolution, print-ready files', free: false, pro: true },
+  { feature: 'Editable Canva & Notion sources', free: false, pro: true },
+  { feature: 'Full extended premium guides', free: false, pro: true },
+  { feature: 'Exclusive Pro-only monthly drops', free: false, pro: true },
+  { feature: 'Unlimited downloads (no checkout)', free: false, pro: true },
+];
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: PRO.name,
+  description: 'Unlimited high-resolution, editable and exclusive printables — the premium YKS membership.',
+  brand: { '@type': 'Brand', name: 'YKS' },
+  offers: {
+    '@type': 'Offer',
+    price: PRO.priceMonthly,
+    priceCurrency: PRO.currency,
+    availability: PRO_LIVE ? 'https://schema.org/InStock' : 'https://schema.org/PreOrder',
+  },
+};
+---
+
+<BaseLayout
+  title={`${PRO.name} — Unlimited High-Res, Editable & Exclusive Printables`}
+  description="Go Pro: unlimited high-resolution and editable versions of every guide, calendar and tracker, the full premium guides, and exclusive monthly drops. Cancel anytime."
+  canonical="/pro"
+  jsonLd={jsonLd}
+>
+  <!-- HERO -->
+  <section class="relative overflow-hidden border-b border-border">
+    <div class="absolute inset-0 bg-grid pointer-events-none"></div>
+    <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[400px] glow-accent pointer-events-none"></div>
+    <div class="relative max-w-3xl mx-auto px-6 pt-20 pb-16 text-center">
+      <div class="chip mb-7"><span class="dot"></span> The premium tier · {PRO.guarantee.split('.')[0]}</div>
+      <h1 class="text-[clamp(2.5rem,7vw,4.75rem)] leading-[0.98] mb-5">
+        Everything,<br /><span class="accent-text">unlocked.</span>
+      </h1>
+      <p class="max-w-xl mx-auto text-lg text-text-muted leading-relaxed">
+        The library stays 90% free — forever. {PRO.name} unlocks the premium 10%: high-resolution and editable files, the full guides, exclusive monthly drops, and unlimited downloads.
+      </p>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="max-w-5xl mx-auto px-6 py-16" x-data="{ yearly: true }">
+    <div class="grid lg:grid-cols-[1fr_1.1fr] gap-6 items-start">
+      <!-- price card -->
+      <div class="surface-card p-8 reveal">
+        <!-- toggle -->
+        <div class="inline-flex gap-1 p-1 rounded-full border border-border bg-bg mb-8">
+          <button @click="yearly = false" class="px-4 py-1.5 rounded-full text-xs font-medium transition-colors" :class="!yearly ? 'bg-primary text-[#0a0a0b]' : 'text-text-muted hover:text-text'">Monthly</button>
+          <button @click="yearly = true" class="px-4 py-1.5 rounded-full text-xs font-medium transition-colors inline-flex items-center gap-1.5" :class="yearly ? 'bg-primary text-[#0a0a0b]' : 'text-text-muted hover:text-text'">Yearly <span class="font-mono text-[9px] opacity-80">SAVE 40%</span></button>
+        </div>
+
+        <div class="flex items-baseline gap-2 mb-1">
+          <span class="font-display font-bold text-6xl tabular-nums" x-text={`yearly ? '$${yearlyPerMonth}' : '$${PRO.priceMonthly}'`}>${PRO.priceMonthly}</span>
+          <span class="text-text-subtle">/ month</span>
+        </div>
+        <p class="text-sm text-text-subtle mb-7">
+          <span x-show="yearly" x-cloak>Billed ${PRO.priceYearly}/year · cancel anytime</span>
+          <span x-show="!yearly">Billed ${PRO.priceMonthly}/month · cancel anytime</span>
+        </p>
+
+        {PRO_LIVE ? (
+          <a
+            :href={`yearly ? '${PRO.checkoutYearly}' : '${PRO.checkoutMonthly}'`}
+            class="btn btn-primary w-full justify-center text-base py-4 shadow-xl shadow-primary/30"
+          >
+            Go {PRO.name} →
+          </a>
+        ) : (
+          <div>
+            <a href="/#lead-magnet" class="btn btn-primary w-full justify-center text-base py-4 shadow-xl shadow-primary/30">
+              Get notified at launch →
+            </a>
+            <p class="text-center text-[11px] text-text-subtle mt-2 font-mono">PRO IS LAUNCHING SOON</p>
+          </div>
+        )}
+
+        <p class="text-center text-xs text-text-subtle mt-4">{PRO.guarantee}</p>
+
+        <div class="mt-6 pt-6 border-t border-border text-center">
+          <a href="/pro/unlock" class="text-sm text-text-muted hover:text-primary transition-colors">Already a member? Unlock your account →</a>
+        </div>
+      </div>
+
+      <!-- features -->
+      <div class="surface-card p-8 reveal" style="--reveal-delay:90ms">
+        <div class="eyebrow mb-5">What you get</div>
+        <ul class="space-y-3.5">
+          {PRO.features.map(f => (
+            <li class="flex items-start gap-3 text-[15px]">
+              <span class="shrink-0 mt-0.5 w-5 h-5 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs">✓</span>
+              <span class="text-text-muted">{f}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARISON -->
+  <section class="max-w-3xl mx-auto px-6 pb-24">
+    <div class="text-center mb-10 reveal">
+      <div class="eyebrow mb-3">Free vs Pro</div>
+      <h2 class="text-3xl md:text-4xl">The free library is genuinely great. Pro just removes every limit.</h2>
+    </div>
+
+    <div class="surface-card overflow-hidden reveal">
+      <div class="grid grid-cols-[1fr_auto_auto] text-sm">
+        <div class="px-5 py-3.5 bg-bg-elevated font-mono text-[10px] tracking-wider uppercase text-text-subtle">Feature</div>
+        <div class="px-5 py-3.5 bg-bg-elevated font-mono text-[10px] tracking-wider uppercase text-text-subtle text-center w-20">Free</div>
+        <div class="px-5 py-3.5 bg-bg-elevated font-mono text-[10px] tracking-wider uppercase text-primary text-center w-20">Pro</div>
+        {comparison.map(row => (
+          <>
+            <div class="px-5 py-3.5 border-t border-border text-text-muted">{row.feature}</div>
+            <div class="px-5 py-3.5 border-t border-border text-center text-text-subtle">{row.free ? '✓' : '—'}</div>
+            <div class="px-5 py-3.5 border-t border-border text-center text-primary font-semibold">{row.pro ? '✓' : '—'}</div>
+          </>
+        ))}
+      </div>
+    </div>
+
+    <p class="text-center text-sm text-text-muted mt-8">
+      Not ready? <a href="/guides" class="text-primary underline underline-offset-4">The free library</a> and <a href="/tools" class="text-primary underline underline-offset-4">free tools</a> are always there, no signup.
+    </p>
+  </section>
+</BaseLayout>
+</content>

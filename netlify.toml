@@ -1,0 +1,62 @@
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Serverless functions for YKS Pro (license validation + logout).
+# Edge gating paths are declared in-file via `export const config` in
+# netlify/edge-functions/pro-gate.js. Required env vars (set in Netlify UI):
+#   PRO_COOKIE_SECRET   — long random string used to sign the membership cookie
+#   LEMON_PRO_VARIANT_ID (optional) — restrict valid licenses to your Pro product
+[functions]
+  directory = "netlify/functions"
+
+# Netlify Forms (used for newsletter + contact)
+[build.processing]
+  skip_processing = false
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+
+# Strong caching for static assets + PDFs (guides are immutable once published)
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/downloads/*.pdf"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"  # 30 days for PDFs (user can re-download via email anyway)
+    Content-Disposition = "attachment"
+
+[[headers]]
+  for = "/images/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Redirects (example for future custom domains or old links)
+[[redirects]]
+  from = "/free-guide"
+  to = "/#lead-magnet"
+  status = 301
+
+# Decap CMS admin UI (SPA with client-side routes). Serve index.html for any /admin subpath.
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin/index.html"
+  status = 200
+
+# SPA-like fallback not needed for pure static
+
+# Form detection (Netlify auto-detects, but explicit is good)
+[forms]
+  # newsletter and contact forms are defined in pages with data-netlify="true"

@@ -1,0 +1,81 @@
+---
+/**
+ * /pro/library — the members-only download hub.
+ *
+ * Protected at the CDN by netlify/edge-functions/pro-gate.js (verifies the
+ * signed membership cookie). The page itself just lists everything Pro: the
+ * high-res/editable versions of free items plus Pro-exclusive items.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { PRO } from '../../config/pro';
+import { getCollection } from 'astro:content';
+
+const guides = await getCollection('guides', ({ data }) => !data.draft);
+
+// Anything with a Pro asset: a high-res version, or a Pro-exclusive item.
+const proItems = guides
+  .filter((g) => g.data.highResPdf || g.data.proOnly)
+  .sort((a, b) => a.data.title.localeCompare(b.data.title));
+
+const exclusives = proItems.filter((g) => g.data.proOnly);
+const hires = proItems.filter((g) => g.data.highResPdf && !g.data.proOnly);
+---
+
+<BaseLayout
+  title={`${PRO.name} Library`}
+  description="Your YKS Pro member library — high-resolution, editable and exclusive downloads."
+  canonical="/pro/library"
+  noindex={true}
+>
+  <section class="max-w-5xl mx-auto px-6 py-16" data-pagefind-ignore="all">
+    <div class="flex flex-wrap items-end justify-between gap-4 mb-10 border-b border-border pb-6">
+      <div>
+        <div class="eyebrow mb-3">{PRO.name} · member library</div>
+        <h1 class="text-4xl md:text-5xl">Everything, unlocked.</h1>
+        <p class="text-text-muted mt-3 max-w-lg leading-relaxed">High-resolution and editable versions of the whole library, plus your Pro-exclusive drops. Download as much as you like.</p>
+      </div>
+      <a href="/.netlify/functions/pro-logout" class="btn btn-ghost text-sm">Sign out</a>
+    </div>
+
+    {exclusives.length > 0 && (
+      <div class="mb-14">
+        <h2 class="text-2xl mb-5 flex items-center gap-2"><span class="badge badge-pro">PRO</span> Exclusive drops</h2>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {exclusives.map((g) => (
+            <a href={g.data.highResPdf || g.data.pdfFilename} download class="surface-card p-5 hover:border-primary/50 transition-colors block">
+              <div class="font-display font-semibold tracking-tight mb-1">{g.data.title}</div>
+              <div class="text-xs text-text-subtle mb-3">{g.data.category}</div>
+              <span class="font-mono text-[11px] tracking-wider text-primary">DOWNLOAD →</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <h2 class="text-2xl mb-5">High-resolution &amp; editable</h2>
+    {hires.length > 0 ? (
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {hires.map((g) => (
+          <div class="surface-card p-5">
+            <div class="font-display font-semibold tracking-tight mb-1">{g.data.title}</div>
+            <div class="text-xs text-text-subtle mb-3">{g.data.category}</div>
+            <div class="flex flex-wrap gap-3">
+              <a href={g.data.highResPdf} download class="font-mono text-[11px] tracking-wider text-primary">HIGH-RES PDF →</a>
+              <a href={`/guides/${g.data.slug}`} class="font-mono text-[11px] tracking-wider text-text-subtle hover:text-text">VIEW →</a>
+            </div>
+            {g.data.proBonuses && g.data.proBonuses.length > 0 && (
+              <div class="mt-3 text-[11px] text-text-subtle">{g.data.proBonuses.join(' · ')}</div>
+            )}
+          </div>
+        ))}
+      </div>
+    ) : (
+      <p class="text-text-muted text-sm">Pro versions are being added — check back shortly.</p>
+    )}
+
+    <p class="mt-12 text-xs text-text-subtle">
+      Having trouble with a download? <a href="/contact" class="text-primary underline underline-offset-4">Contact support</a> — we'll sort it out fast.
+    </p>
+  </section>
+</BaseLayout>
+</content>

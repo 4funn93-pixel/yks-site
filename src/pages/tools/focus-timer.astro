@@ -1,0 +1,229 @@
+---
+/**
+ * Focus Timer — free interactive Pomodoro-style tool.
+ * Animated SVG ring countdown, focus/break cycles, today's session count
+ * persisted to localStorage. Premium hook = the Focus OS print pack.
+ * Alpine.js, zero heavy JS.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Free Focus Timer',
+  applicationCategory: 'ProductivityApplication',
+  operatingSystem: 'Any (web browser)',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  description: 'A free, no-signup focus timer with focus/break cycles and a daily session count.',
+};
+---
+
+<BaseLayout
+  title="Free Focus Timer — Deep Work in Your Browser"
+  description="A clean, no-signup focus timer. Run distraction-free focus sprints with built-in breaks, track today's sessions, and stay in flow. Free forever — runs in your browser."
+  canonical="/tools/focus-timer"
+  jsonLd={jsonLd}
+>
+  <section class="max-w-3xl mx-auto px-6 pt-12 pb-6">
+    <a href="/tools" class="font-mono text-[11px] tracking-wider text-text-subtle hover:text-primary transition-colors">← All tools</a>
+    <div class="mt-5">
+      <div class="eyebrow mb-3">Free interactive tool</div>
+      <h1 class="text-4xl md:text-5xl">Focus timer</h1>
+      <p class="mt-3 text-text-muted max-w-xl leading-relaxed">
+        One sprint at a time. Pick a length, start, and protect the block. Today's sessions are saved in this browser.
+      </p>
+    </div>
+  </section>
+
+  <section class="max-w-3xl mx-auto px-6 pb-24" x-data="focusTimer" x-cloak>
+    <div class="surface-card p-8 md:p-12 text-center relative overflow-hidden">
+      <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-[480px] h-[260px] glow-accent pointer-events-none" :style="running ? 'opacity:1' : 'opacity:.4'"></div>
+
+      <!-- mode switch -->
+      <div class="relative inline-flex gap-1 p-1 rounded-full border border-border bg-bg mb-10">
+        <template x-for="m in modes" :key="m.id">
+          <button
+            @click="setMode(m.id)"
+            class="px-4 py-1.5 rounded-full text-xs font-medium transition-colors"
+            :class="mode === m.id ? 'bg-primary text-[#0a0a0b]' : 'text-text-muted hover:text-text'"
+            x-text="m.label"
+          ></button>
+        </template>
+      </div>
+
+      <!-- ring -->
+      <div class="relative mx-auto w-[260px] h-[260px]">
+        <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90">
+          <circle cx="60" cy="60" r="54" fill="none" stroke="var(--color-surface)" stroke-width="6" />
+          <circle
+            cx="60" cy="60" r="54" fill="none" stroke="var(--color-primary)" stroke-width="6"
+            stroke-linecap="round"
+            :stroke-dasharray="circumference"
+            :stroke-dashoffset="circumference * (1 - progress)"
+            style="transition: stroke-dashoffset 0.95s linear"
+          />
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <div class="font-display font-bold text-6xl tabular-nums tracking-tight" x-text="display"></div>
+          <div class="font-mono text-[11px] tracking-[0.2em] uppercase mt-1" :class="running ? 'text-primary' : 'text-text-subtle'" x-text="running ? 'In focus' : currentLabel"></div>
+        </div>
+      </div>
+
+      <!-- controls -->
+      <div class="flex items-center justify-center gap-3 mt-10">
+        <button @click="toggle()" class="btn btn-primary px-10 py-4 text-base" x-text="running ? 'Pause' : (remaining < total ? 'Resume' : 'Start')"></button>
+        <button @click="reset()" class="share-btn" aria-label="Reset timer" title="Reset">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.5 12a7.5 7.5 0 107.5-7.5A7.5 7.5 0 006 6.6"/><path d="M5.5 3.5v4h4"/></svg>
+        </button>
+      </div>
+
+      <!-- session count -->
+      <div class="mt-10 pt-8 border-t border-border flex items-center justify-center gap-8">
+        <div>
+          <div class="font-display font-bold text-2xl tabular-nums" x-text="sessionsToday"></div>
+          <div class="font-mono text-[10px] tracking-wider uppercase text-text-subtle mt-1">Focus sessions today</div>
+        </div>
+        <div class="w-px h-10 bg-border"></div>
+        <div>
+          <div class="font-display font-bold text-2xl tabular-nums" x-text="focusMinsToday + 'm'"></div>
+          <div class="font-mono text-[10px] tracking-wider uppercase text-text-subtle mt-1">Focused minutes</div>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-center text-xs text-text-subtle mt-4 font-mono">Keep this tab open while you work. Sessions reset daily.</p>
+
+    <!-- premium hook -->
+    <div class="mt-10 surface-card relative overflow-hidden p-8 md:p-10">
+      <div class="absolute -top-20 right-0 w-[360px] h-[200px] glow-accent pointer-events-none"></div>
+      <div class="relative md:flex items-center justify-between gap-8">
+        <div class="max-w-lg">
+          <div class="eyebrow mb-3">Go further</div>
+          <h2 class="text-2xl md:text-3xl mb-3">Turn focus into a system</h2>
+          <p class="text-text-muted leading-relaxed text-[15px]">
+            The timer is free forever. The premium Focus OS pack gives you the full deep-work system on paper: daily focus planners, distraction logs, weekly reviews and the frameworks behind staying in flow.
+          </p>
+        </div>
+        <a href="/guides/focus-os" class="btn btn-primary mt-5 md:mt-0 whitespace-nowrap shrink-0">Explore Focus OS →</a>
+      </div>
+    </div>
+  </section>
+
+  <script is:inline>
+    document.addEventListener('alpine:init', () => {
+      const KEY = 'yks:focus:v1';
+      const today = () => new Date().toISOString().slice(0, 10);
+
+      window.Alpine.data('focusTimer', () => ({
+        modes: [
+          { id: 'focus', label: 'Focus 25', mins: 25 },
+          { id: 'short', label: 'Break 5', mins: 5 },
+          { id: 'long', label: 'Break 15', mins: 15 },
+        ],
+        mode: 'focus',
+        total: 25 * 60,
+        remaining: 25 * 60,
+        running: false,
+        _timer: null,
+        sessionsToday: 0,
+        focusMinsToday: 0,
+        circumference: 2 * Math.PI * 54,
+
+        init() {
+          try {
+            const raw = localStorage.getItem(KEY);
+            if (raw) {
+              const d = JSON.parse(raw);
+              if (d.date === today()) {
+                this.sessionsToday = d.sessions || 0;
+                this.focusMinsToday = d.mins || 0;
+              }
+            }
+          } catch (e) { /* ignore */ }
+          document.addEventListener('visibilitychange', () => {
+            // keep accurate across tab sleep by recomputing from a timestamp
+            if (!document.hidden && this.running) this._sync();
+          });
+        },
+
+        get currentMode() { return this.modes.find((m) => m.id === this.mode); },
+        get currentLabel() { return this.mode === 'focus' ? 'Ready to focus' : 'Break time'; },
+        get progress() { return this.total === 0 ? 0 : 1 - this.remaining / this.total; },
+        get display() {
+          const m = Math.floor(this.remaining / 60);
+          const s = this.remaining % 60;
+          return `${m}:${String(s).padStart(2, '0')}`;
+        },
+
+        setMode(id) {
+          this.mode = id;
+          this.stop();
+          this.total = this.currentMode.mins * 60;
+          this.remaining = this.total;
+        },
+
+        toggle() { this.running ? this.stop() : this.start(); },
+
+        start() {
+          if (this.remaining <= 0) this.remaining = this.total;
+          this.running = true;
+          this._endAt = Date.now() + this.remaining * 1000;
+          this._timer = setInterval(() => this._sync(), 250);
+        },
+
+        _sync() {
+          const left = Math.round((this._endAt - Date.now()) / 1000);
+          this.remaining = Math.max(0, left);
+          if (this.remaining <= 0) this.complete();
+        },
+
+        stop() {
+          this.running = false;
+          if (this._timer) clearInterval(this._timer);
+        },
+
+        reset() {
+          this.stop();
+          this.remaining = this.total;
+        },
+
+        complete() {
+          this.stop();
+          this.remaining = 0;
+          if (this.mode === 'focus') {
+            this.sessionsToday++;
+            this.focusMinsToday += this.currentMode.mins;
+            this._persist();
+            this._chime();
+          }
+        },
+
+        _persist() {
+          try {
+            localStorage.setItem(KEY, JSON.stringify({
+              date: today(), sessions: this.sessionsToday, mins: this.focusMinsToday,
+            }));
+          } catch (e) { /* ignore */ }
+        },
+
+        _chime() {
+          try {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return;
+            const ctx = new AC();
+            const o = ctx.createOscillator(), g = ctx.createGain();
+            o.connect(g); g.connect(ctx.destination);
+            o.type = 'sine'; o.frequency.value = 660;
+            g.gain.setValueAtTime(0.0001, ctx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.02);
+            g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.9);
+            o.start(); o.stop(ctx.currentTime + 0.9);
+          } catch (e) { /* audio optional */ }
+        },
+
+        _endAt: 0,
+      }));
+    });
+  </script>
+</BaseLayout>
+</content>

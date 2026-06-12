@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" role="img" aria-label="Minimalist 2026 calendar">
+  <rect width="600" height="450" fill="#0e0e11"/>
+  <g stroke="#1c1c21" stroke-width="1"><path d="M0 90H600M0 360H600"/></g>
+  <text x="48" y="70" fill="#71717a" font-family="monospace" font-size="15" letter-spacing="4">2026 CALENDAR</text>
+  <!-- calendar card -->
+  <g transform="translate(48,112)">
+    <rect width="360" height="216" rx="14" fill="#131316" stroke="#26262c" stroke-width="1.5"/>
+    <text x="24" y="44" fill="#c7f73e" font-family="sans-serif" font-size="22" font-weight="700">January</text>
+    <text x="336" y="44" fill="#71717a" font-family="monospace" font-size="16" text-anchor="end">2026</text>
+    <g font-family="monospace" font-size="11" fill="#71717a">
+      <text x="24" y="78">M</text><text x="72" y="78">T</text><text x="120" y="78">W</text><text x="168" y="78">T</text><text x="216" y="78">F</text><text x="264" y="78">S</text><text x="312" y="78">S</text>
+    </g>
+    <g fill="#52525b" font-family="monospace" font-size="13">
+      <text x="216" y="110">1</text><text x="264" y="110">2</text><text x="312" y="110">3</text>
+      <text x="24" y="138">5</text><text x="72" y="138">6</text><text x="120" y="138">7</text><text x="168" y="138">8</text><text x="216" y="138">9</text>
+      <text x="24" y="166">12</text><text x="72" y="166">13</text><text x="120" y="166">14</text><text x="168" y="166">15</text><text x="216" y="166">16</text>
+    </g>
+    <!-- highlighted day -->
+    <circle cx="124" cy="161" r="16" fill="#c7f73e"/>
+    <text x="120" y="166" fill="#0e0e11" font-family="monospace" font-size="13" font-weight="700">14</text>
+  </g>
+  <!-- month chips -->
+  <g font-family="monospace" font-size="12" fill="#a1a1aa">
+    <rect x="432" y="120" width="120" height="30" rx="8" fill="#1a1a1f"/><text x="448" y="140">FEB</text>
+    <rect x="432" y="160" width="120" height="30" rx="8" fill="#1a1a1f"/><text x="448" y="180">MAR</text>
+    <rect x="432" y="200" width="120" height="30" rx="8" fill="#c7f73e"/><text x="448" y="220" fill="#0e0e11">APR</text>
+    <rect x="432" y="240" width="120" height="30" rx="8" fill="#1a1a1f"/><text x="448" y="260">MAY</text>
+  </g>
+  <text x="48" y="392" fill="#a1a1aa" font-family="sans-serif" font-size="26" font-weight="700">Minimalist 2026 Calendar</text>
+</svg>

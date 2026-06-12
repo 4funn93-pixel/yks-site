@@ -1,0 +1,38 @@
+---
+/**
+ * What's Included section - matches top competitor guides
+ * Shows tangible value: templates, checklists, etc.
+ */
+export interface Props {
+  includes: string[];
+  templates?: number;
+  pages?: string;
+}
+
+const { includes, templates = 0, pages = "" } = Astro.props;
+// Only surface the page count when it's actually a clean number — reading times
+// like "40+ page system" shouldn't render as "40+ page system pages".
+const pagesNum = /^\d+$/.test(pages.trim()) ? pages.trim() : null;
+---
+
+<div class="not-prose bg-surface border border-border rounded-3xl p-8 mb-12">
+  <div class="flex items-center gap-3 mb-6">
+    <div class="text-2xl">📦</div>
+    <h3 class="font-semibold text-2xl tracking-tight">What's Included</h3>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+    {includes.map(item => (
+      <div class="flex items-start gap-3">
+        <span class="text-primary mt-0.5">✓</span>
+        <span>{item}</span>
+      </div>
+    ))}
+  </div>
+
+  <div class="mt-6 pt-6 border-t border-border text-xs text-text-muted flex flex-wrap gap-x-6 gap-y-1">
+    {pagesNum && <div><strong>{pagesNum} pages</strong> of practical systems</div>}
+    {templates > 0 && <div><strong>{templates} page previews</strong> included</div>}
+    <div><strong>Lifetime updates</strong> included</div>
+  </div>
+</div>

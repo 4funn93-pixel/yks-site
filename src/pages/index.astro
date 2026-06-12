@@ -1,11 +1,313 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+/**
+ * YKS homepage — outcome-led, product-forward.
+ * Structure mirrors leading creator/guide storefronts (Justin Welsh, Easlo):
+ * lead with outcome + credibility, showcase the products, present a free
+ * flagship, then state the free-first philosophy once, honestly.
+ * Editorial dark design: acid-lime accent, oversized display type, mono eyebrows.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import GuideCard from '../components/GuideCard.astro';
+import StickerBoxes from '../components/StickerBoxes.astro';
+import ToolMockup from '../components/ToolMockup.astro';
+import { getCollection } from 'astro:content';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const guides = await getCollection('guides', ({ data }) => !data.draft);
+const featuredGuides = guides.filter(g => g.data.featured).slice(0, 8);
+const freeGuides = guides.filter(g => g.data.isFree || g.data.price === 0).slice(0, 3);
+
+const blogPosts = await getCollection('blog', ({ data }) => !data.draft);
+const latestPosts = blogPosts
+  .sort((a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime())
+  .slice(0, 3);
+
+// Honest trust signals — facts about how the product works, not invented metrics.
+const trustFacts = [
+  { v: "Instant", l: "PDF delivery" },
+  { v: "Free", l: "Most of the library" },
+  { v: "Print-ready", l: "High-res PDF" },
+  { v: "30-day", l: "Money-back guarantee" },
+];
 ---
 
-<Layout>
-	<Welcome />
-</Layout>
+<BaseLayout
+  title="YKS — Free Productivity Tools & Printables for Habits & Focus"
+  description="Free habit trackers, focus timers and planners you use right in your browser — plus beautifully made printables. No signup, saves your progress. Premium packs from $5–11."
+  image="/og/home-og.jpg"
+  canonical="/"
+>
+  <!-- HERO -->
+  <section class="relative overflow-hidden border-b border-border">
+    <div class="absolute inset-0 bg-grid pointer-events-none"></div>
+    <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[400px] glow-accent pointer-events-none" style="animation: floatGlow 12s ease-in-out infinite"></div>
+
+    <div class="relative mx-auto max-w-5xl px-6 pt-24 pb-24 md:pt-32 md:pb-28 text-center">
+      <div class="chip mb-8">
+        <span class="dot"></span>
+        Free interactive tools · no signup
+      </div>
+
+      <h1 class="text-[clamp(2.75rem,8vw,5.5rem)] leading-[0.95] mb-7">
+        Productivity tools you'll<br class="hidden sm:block" />
+        <span class="accent-text">actually use.</span>
+      </h1>
+
+      <p class="max-w-2xl mx-auto text-lg md:text-xl text-text-muted leading-relaxed mb-10">
+        Free habit trackers, focus timers and planners that run right in your browser and save your progress — backed by a library of beautifully made printables. Start free. Upgrade only if you want the premium packs.
+      </p>
+
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="/tools" class="btn btn-primary text-base px-8 py-4">Open a free tool</a>
+        <a href="/guides" class="btn btn-secondary text-base px-7 py-4">Browse the library</a>
+      </div>
+
+      <div class="mt-7 font-mono text-[11px] tracking-wider text-text-subtle flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+        <span>USE IT IN YOUR BROWSER</span>
+        <span class="text-border">/</span>
+        <span>NO SIGNUP</span>
+        <span class="text-border">/</span>
+        <span>SAVES YOUR PROGRESS</span>
+      </div>
+
+      <!-- Hero product shot -->
+      <div class="relative mt-16 max-w-3xl mx-auto reveal">
+        <div class="absolute -inset-8 glow-accent pointer-events-none"></div>
+        <ToolMockup variant="habit" label="Habit tracker preview" class="relative" />
+        <a href="/tools/habit-tracker" class="absolute inset-0" aria-label="Open the habit tracker"></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST BAR -->
+  <div class="border-b border-border bg-bg-elevated">
+    <div class="mx-auto max-w-5xl px-6 grid grid-cols-2 md:grid-cols-4 divide-x divide-border/60">
+      {trustFacts.map(s => (
+        <div class="py-7 text-center">
+          <div class="font-display text-2xl md:text-[1.6rem] font-bold">{s.v}</div>
+          <div class="font-mono text-[10px] tracking-[0.18em] uppercase text-text-subtle mt-1.5">{s.l}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <!-- FREE INTERACTIVE TOOLS — the lead product showcase -->
+  <section class="max-w-7xl mx-auto px-6 pt-20 pb-12">
+    <div class="flex items-end justify-between mb-8 border-b border-border pb-5 reveal">
+      <div>
+        <div class="eyebrow mb-3">Start here · free · no signup</div>
+        <h2 class="text-3xl md:text-4xl">Tools you actually use</h2>
+        <p class="text-text-muted mt-3 max-w-lg leading-relaxed">Not another PDF to forget — real tools that run in your browser and save your progress. Open one and start in seconds.</p>
+      </div>
+      <a href="/tools" class="hidden md:inline-flex items-center gap-1.5 text-sm font-medium text-text-muted hover:text-primary transition-colors">All tools <span aria-hidden="true">→</span></a>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {[
+        { href: "/tools/habit-tracker", variant: "habit", name: "Habit Tracker", desc: "Tick off your week, build streaks, see completion at a glance. Saves to your browser; print anytime.", tag: "Live", soon: false },
+        { href: "/tools/focus-timer", variant: "focus", name: "Focus Timer", desc: "Distraction-free focus sprints with built-in breaks and a daily session count. Deep work, one block at a time.", tag: "Live", soon: false },
+        { href: "/tools", variant: "planner", name: "Weekly Planner", desc: "Time-block your week in a clean grid and export it. In the workshop — more free tools landing soon.", tag: "Soon", soon: true },
+      ].map((t, i) => (
+        <a href={t.href} class={`guide-card group p-4 flex flex-col reveal ${t.soon ? 'opacity-80' : ''}`} style={`--reveal-delay:${i * 90}ms`}>
+          <ToolMockup variant={t.variant as 'habit' | 'focus' | 'planner'} label={`${t.name} preview`} class="mb-5" />
+          <div class="px-3 pb-3 flex flex-col flex-1">
+            <div class="flex items-start justify-between mb-2">
+              <h3 class="font-display font-semibold text-xl tracking-tight group-hover:text-primary transition-colors">{t.name}</h3>
+              <span class={`badge ${t.soon ? 'badge-paid' : 'badge-free'} mt-1`}>{t.tag}</span>
+            </div>
+            <p class="text-sm text-text-muted leading-relaxed flex-1">{t.desc}</p>
+            <span class="mt-5 font-mono text-[11px] tracking-wider text-primary inline-flex items-center gap-1.5">{t.soon ? 'SEE WHAT\'S COMING' : 'OPEN TOOL'} <span aria-hidden="true">→</span></span>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- FEATURED GUIDES -->
+  <section class="max-w-7xl mx-auto px-6 pt-12 pb-12">
+    <div class="flex items-end justify-between mb-8 border-b border-border pb-5">
+      <div>
+        <div class="eyebrow mb-3">The library</div>
+        <h2 class="text-3xl md:text-4xl">Guides, calendars & trackers</h2>
+      </div>
+      <a href="/guides" class="hidden md:inline-flex items-center gap-1.5 text-sm font-medium text-text-muted hover:text-primary transition-colors">Browse all <span aria-hidden="true">→</span></a>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+      {featuredGuides.map(guide => (
+        <GuideCard guide={guide} featured={true} />
+      ))}
+    </div>
+
+    <div class="mt-8 text-center md:hidden">
+      <a href="/guides" class="btn btn-secondary">Browse complete library</a>
+    </div>
+  </section>
+
+  <!-- FREE STARTERS -->
+  <section class="max-w-7xl mx-auto px-6 pt-12 pb-10">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <div class="eyebrow mb-3">Free to start</div>
+        <h2 class="text-3xl md:text-4xl">Download these right now</h2>
+      </div>
+      <a href="/guides" class="hidden md:inline-flex items-center gap-1.5 text-sm font-medium text-text-muted hover:text-primary transition-colors">All free resources <span aria-hidden="true">→</span></a>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {freeGuides.map(guide => (
+        <GuideCard guide={guide} featured={false} />
+      ))}
+      <a href="#lead-magnet" class="surface-card group flex flex-col justify-center p-7 border-dashed hover:border-primary/60 transition-colors">
+        <div class="eyebrow mb-3">Flagship free</div>
+        <div class="font-display font-semibold text-xl tracking-tight mb-2">Get the free flagship guide + Weekly Systems email</div>
+        <p class="text-sm text-text-muted mb-5">Join makers getting the practical frameworks. No fluff, no spam — just systems that work.</p>
+        <span class="btn btn-primary text-sm self-start py-3">Claim free guide →</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- INTERACTIVE STICKER PACKS -->
+  <StickerBoxes />
+
+  <!-- HOW IT WORKS -->
+  <section class="bg-bg-elevated border-y border-border py-20">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-14">
+        <div class="eyebrow mb-3">How it works</div>
+        <h2 class="text-3xl md:text-4xl">From download to done in minutes</h2>
+      </div>
+
+      <div class="grid md:grid-cols-4 gap-px bg-border rounded-2xl overflow-hidden border border-border">
+        {[
+          { num: "01", title: "Find your tool", desc: "Browse free guides, calendars and trackers. Filter by what you're working on — no signup required to start." },
+          { num: "02", title: "Instant delivery", desc: "Free PDFs download immediately. Premium packs land in your inbox within seconds of checkout." },
+          { num: "03", title: "Implement fast", desc: "Every printable is concise, scannable and packed with copy-paste systems, templates and trackers." },
+          { num: "04", title: "Go deeper if you want", desc: "Curated premium packs add exclusives and complete collections. Backed by a 30-day guarantee." },
+        ].map((step, i) => (
+          <div class="bg-bg-card p-8 reveal" style={`--reveal-delay:${i * 90}ms`}>
+            <div class="font-mono text-primary text-sm tracking-[0.3em] mb-5">{step.num}</div>
+            <div class="font-display font-semibold text-lg mb-2.5 tracking-tight">{step.title}</div>
+            <p class="text-sm text-text-muted leading-relaxed">{step.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- BENEFITS / VALUE PROPS -->
+  <section class="max-w-6xl mx-auto px-6 py-20">
+    <div class="text-center mb-14">
+      <div class="eyebrow mb-3">Why YKS</div>
+      <h2 class="text-3xl md:text-4xl">Tools, not theory</h2>
+    </div>
+    <div class="grid md:grid-cols-3 gap-5">
+      {[
+        { tag: "01 / signal", title: "Signal, not noise", desc: "No 200-page theory books. Every guide is ruthlessly edited for the 20% of tactics that deliver 80% of results." },
+        { tag: "02 / proven", title: "Battle-tested", desc: "Every framework is something we actually use and have tested in real work — not recycled theory from gurus." },
+        { tag: "03 / systems", title: "Systems over motivation", desc: "Repeatable playbooks, templates and decision trees, so results don't depend on how you feel on Tuesday." },
+      ].map((b, i) => (
+        <div class="surface-card p-8 hover:border-primary/40 transition-colors reveal" style={`--reveal-delay:${i * 90}ms`}>
+          <div class="font-mono text-[11px] tracking-[0.16em] uppercase text-primary mb-6">{b.tag}</div>
+          <h3 class="font-display font-semibold text-xl tracking-tight mb-3">{b.title}</h3>
+          <p class="text-text-muted leading-relaxed text-[15px]">{b.desc}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  {/* Testimonials intentionally omitted until we have real, attributable customer reviews.
+      Drop a <section> here with genuine quotes (and ideally permission/source) when available. */}
+
+  <!-- THE PROMISE — the one honest home for the free-first philosophy -->
+  <section class="max-w-5xl mx-auto px-6 py-24">
+    <div class="grid md:grid-cols-[0.9fr_1.1fr] gap-10 md:gap-16 items-center reveal">
+      <div>
+        <div class="eyebrow mb-4">Our promise</div>
+        <h2 class="text-3xl md:text-4xl leading-tight">Most of what we make is <span class="accent-text">free.</span> On purpose.</h2>
+      </div>
+      <div class="text-text-muted leading-relaxed space-y-4 text-[15px]">
+        <p>We'd rather earn your trust than gate it. The core library — guides, calendars and trackers — is free to download, forever. No drip-fed teasers, no "unlock with email" walls on the essentials.</p>
+        <p>A small set of curated <a href="/bundles" class="text-primary underline underline-offset-4">premium packs</a> funds the work and adds the deep, exclusive material for people who want to go all-in. That's the whole model — and it keeps the free stuff genuinely good.</p>
+      </div>
+    </div>
+  </section>
+
+  {/* Case studies intentionally omitted until we have real, documented results to cite. */}
+
+  <!-- LEAD MAGNET / NEWSLETTER -->
+  <section id="lead-magnet" class="max-w-3xl mx-auto px-6 py-24 scroll-mt-20">
+    <div class="surface-card relative overflow-hidden p-10 md:p-14 text-center reveal">
+      <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-[500px] h-[260px] glow-accent pointer-events-none"></div>
+      <div class="relative">
+        <div class="eyebrow mb-4">Free flagship resource</div>
+        <h2 class="text-3xl md:text-4xl mb-4">Get the Canva-to-3D Mockups Guide (8 templates) + Weekly Creator Systems</h2>
+        <p class="text-text-muted mb-8 max-w-md mx-auto leading-relaxed">One high-signal email per week: new frameworks, templates and early access to new guides. Includes the exact 8 Canva templates + checklists. <strong class="text-text">Lifetime updates included.</strong> No spam. Ever.</p>
+
+        <form
+          name="newsletter"
+          method="POST"
+          action="/thank-you?type=newsletter"
+          data-netlify="true"
+          data-netlify-honeypot="bot-field"
+          class="max-w-md mx-auto"
+        >
+          <input type="hidden" name="form-name" value="newsletter" />
+          <p class="hidden"><label>Leave this empty: <input name="bot-field" /></label></p>
+
+          <div class="flex flex-col sm:flex-row gap-3">
+            <input
+              type="email"
+              name="email"
+              required
+              placeholder="you@yourstudio.com"
+              class="flex-1 bg-bg border border-border focus:border-primary rounded-full px-6 py-3.5 text-base placeholder:text-text-subtle outline-none transition-colors"
+            />
+            <button type="submit" class="btn btn-primary px-7 whitespace-nowrap">Send me the guide</button>
+          </div>
+          <p class="font-mono text-[10px] tracking-wide text-text-subtle mt-4 uppercase">We respect your inbox · Unsubscribe anytime · Never sold</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- BLOG TEASER -->
+  <section class="border-t border-border py-20 bg-bg-elevated">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="flex justify-between items-end mb-10">
+        <div>
+          <div class="eyebrow mb-3">From the blog</div>
+          <h2 class="text-3xl md:text-4xl">Latest insights</h2>
+        </div>
+        <a href="/blog" class="hidden md:inline-flex items-center gap-1.5 text-sm text-text-muted hover:text-primary transition-colors">All articles <span aria-hidden="true">→</span></a>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-5">
+        {latestPosts.map((post, i) => (
+          <a href={`/blog/${post.data.slug}`} class="blog-card group block p-7 reveal" style={`--reveal-delay:${i * 90}ms`}>
+            <div class="font-mono text-[11px] text-primary tracking-[0.16em] uppercase mb-4">{post.data.category}</div>
+            <h3 class="font-display font-semibold text-xl tracking-tight mb-3 group-hover:text-primary transition-colors line-clamp-2">{post.data.title}</h3>
+            <p class="text-sm text-text-muted line-clamp-3 mb-5 leading-relaxed">{post.data.description}</p>
+            <div class="font-mono text-[11px] text-text-subtle flex items-center gap-2 tracking-wide">
+              <span>{post.data.readingTime}</span>
+              <span class="text-border">·</span>
+              <span>{post.data.publishedAt.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="relative overflow-hidden py-24 border-t border-border">
+    <div class="absolute inset-0 bg-grid pointer-events-none opacity-60"></div>
+    <div class="relative max-w-xl mx-auto text-center px-6 reveal">
+      <h2 class="text-4xl md:text-5xl mb-5">Start with the<br /><span class="accent-text">free library.</span></h2>
+      <p class="text-text-muted mb-9 leading-relaxed">Download practical printables right now — no signup, no catch. The curated premium packs are there when you're ready for more.</p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="/guides" class="btn btn-primary px-8 py-4">Browse the library</a>
+        <a href="#lead-magnet" class="btn btn-secondary px-7 py-4">Get the free starter guide</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
