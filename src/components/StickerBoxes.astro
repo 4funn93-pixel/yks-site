@@ -62,13 +62,14 @@ const cooldownDays = 7;
 </svg>
 
 <section
-  class="relative overflow-hidden border-y border-border bg-bg-elevated py-20"
+  id="weekly-drop"
+  class="relative overflow-hidden border-y border-border bg-bg-elevated py-20 scroll-mt-20"
   x-data="stickerDrop"
 >
   <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-[700px] h-[360px] glow-accent pointer-events-none"></div>
   <div class="relative max-w-6xl mx-auto px-6">
     <div class="text-center mb-10">
-      <Mascot pose="wink" class="w-12 h-12 mx-auto mb-3 text-primary" title="Sprout with this week's drop" />
+      <Mascot pose="wink" class="w-12 h-12 mx-auto mb-3 text-primary" title="Smallz with this week's drop" />
       <div class="eyebrow mb-3">Weekly sticker drop</div>
       <h2 class="text-3xl md:text-4xl">Pick one box</h2>
       <p class="text-text-muted leading-relaxed mt-3 max-w-md mx-auto" x-show="!locked" x-cloak>

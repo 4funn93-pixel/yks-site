@@ -10,6 +10,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import GuideCard from '../components/GuideCard.astro';
 import StickerBoxes from '../components/StickerBoxes.astro';
 import ToolMockup from '../components/ToolMockup.astro';
+import MascotPeek from '../components/MascotPeek.astro';
 import { getCollection } from 'astro:content';
 
 const guides = await getCollection('guides', ({ data }) => !data.draft);
@@ -310,4 +311,7 @@ const trustFacts = [
       </div>
     </div>
   </section>
+
+  <!-- Smallz — interactive corner mascot (homepage only) -->
+  <MascotPeek />
 </BaseLayout>
