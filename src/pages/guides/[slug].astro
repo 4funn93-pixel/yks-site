@@ -139,7 +139,7 @@ const jsonLd = {
         )}
 
         <!-- Persuasive Long-form MDX Content -->
-        <article class="prose prose-invert max-w-none">
+        <article id="guide-content" class="prose prose-invert max-w-none scroll-mt-24">
           <Content />
         </article>
 
@@ -223,7 +223,16 @@ const jsonLd = {
                 Unlock with {PRO.name} →
               </a>
             ) : isFree ? (
-              <FreeDownloadButton filename={data.pdfFilename} title={data.title} />
+              data.pdfFilename ? (
+                <FreeDownloadButton filename={data.pdfFilename} title={data.title} />
+              ) : (
+                <Fragment>
+                  <a href="#guide-content" class="btn btn-primary w-full justify-center text-base py-4 px-9 shadow-xl">
+                    Read the full guide ↓
+                  </a>
+                  <p class="text-center text-xs text-text-subtle mt-3">Free to read · no signup. <a href="#lead-magnet" class="underline hover:text-primary">Get the weekly email too →</a></p>
+                </Fragment>
+              )
             ) : (
               <LemonBuyButton
                 variantId={data.lemonSqueezyVariantId}

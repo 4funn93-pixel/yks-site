@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" role="img" aria-label="Gentle wellness basics for neurodivergent brains">
+  <rect width="600" height="450" fill="#0e0e11"/>
+  <g stroke="#1c1c21" stroke-width="1"><path d="M0 112H600M0 224H600M0 336H600"/></g>
+  <text x="48" y="70" fill="#71717a" font-family="monospace" font-size="15" letter-spacing="4">REGULATE · GENTLY</text>
+  <!-- calm orb -->
+  <circle cx="300" cy="214" r="104" fill="none" stroke="#26262c" stroke-width="1.5"/>
+  <circle cx="300" cy="214" r="80" fill="none" stroke="#6ee7ff" stroke-width="1.5" opacity="0.5"/>
+  <circle cx="300" cy="214" r="58" fill="#6ee7ff" opacity="0.16"/>
+  <circle cx="300" cy="214" r="58" fill="none" stroke="#6ee7ff" stroke-width="2.5" opacity="0.85"/>
+  <!-- heartbeat line through the orb -->
+  <path d="M150 214 H250 l16 -34 l22 70 l20 -52 l16 16 H450"
+    fill="none" stroke="#c7f73e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="48" y="406" fill="#a1a1aa" font-family="sans-serif" font-size="26" font-weight="700">Neurodivergent Wellness Basics</text>
+</svg>

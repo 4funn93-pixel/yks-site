@@ -1,0 +1,415 @@
+---
+/**
+ * Breathing — free interactive guided-breathing tool.
+ * A big animated "breath orb" that expands/holds/contracts in time with the
+ * chosen technique, an aurora background that shifts colour per phase, popular
+ * presets (Box, 4-7-8, Coherent, Triangle, Deep Calm, Energize) + a Custom
+ * builder, and per-day stats persisted to localStorage. Alpine.js, no heavy JS.
+ *
+ * Interactive Alpine component is registered in a <script is:inline> in PLAIN JS
+ * (no TS) — see the site's Alpine convention (focus-timer.astro / habit-tracker).
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Free Breathing Tool',
+  applicationCategory: 'HealthApplication',
+  operatingSystem: 'Any (web browser)',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  description: 'A free guided breathing tool with Box, 4-7-8, Coherent, Triangle and custom patterns, plus a calming animated breath orb. No signup.',
+};
+---
+
+<BaseLayout
+  title="Free Breathing Tool — Box, 4-7-8 & Coherent Breathing"
+  description="A free guided breathing tool with a calming animated orb. Box breathing, 4-7-8, coherent/resonant, triangle, extended-exhale and a build-your-own pattern. No signup — runs in your browser."
+  canonical="/tools/breathing"
+  jsonLd={jsonLd}
+>
+  <section class="max-w-3xl mx-auto px-6 pt-12 pb-6">
+    <a href="/tools" class="font-mono text-[11px] tracking-wider text-text-subtle hover:text-primary transition-colors">← All tools</a>
+    <div class="mt-5">
+      <div class="eyebrow mb-3">Free interactive tool</div>
+      <h1 class="text-4xl md:text-5xl">Breathe</h1>
+      <p class="mt-3 text-text-muted max-w-xl leading-relaxed">
+        Follow the orb. Pick a technique, press start, and let your breath settle into the rhythm. Nothing to install, nothing saved to a server.
+      </p>
+    </div>
+  </section>
+
+  <section class="max-w-3xl mx-auto px-6 pb-24" x-data="breathApp" x-cloak>
+    <!-- technique picker -->
+    <div class="flex flex-wrap gap-2 justify-center mb-8">
+      <template x-for="t in techniques" :key="t.id">
+        <button
+          @click="selectTech(t.id)"
+          class="px-4 py-2 rounded-full text-sm font-medium border transition-colors"
+          :class="techId === t.id ? 'bg-primary text-[#0a0a0b] border-primary' : 'border-border text-text-muted hover:text-text hover:border-text-subtle'"
+        >
+          <span x-text="t.name"></span>
+          <span class="font-mono text-[10px] opacity-70 ml-1.5" x-text="t.tag"></span>
+        </button>
+      </template>
+    </div>
+
+    <!-- custom builder -->
+    <div x-show="techId === 'custom'" x-cloak class="surface-card p-5 mb-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <template x-for="f in customFields" :key="f.key">
+        <label class="block text-center">
+          <span class="font-mono text-[10px] tracking-wider uppercase text-text-subtle" x-text="f.label"></span>
+          <input type="range" min="0" max="12" step="1" x-model.number="custom[f.key]"
+            class="w-full accent-[var(--color-primary)] mt-2" />
+          <span class="font-display font-bold text-lg tabular-nums" x-text="custom[f.key] + 's'"></span>
+        </label>
+      </template>
+    </div>
+
+    <!-- the stage -->
+    <div class="breath-stage" :class="running ? 'is-running' : ''" :style="`--phase:${phaseColor}`">
+      <div class="aurora aurora-a"></div>
+      <div class="aurora aurora-b"></div>
+      <div class="aurora aurora-c"></div>
+
+      <div class="orb-wrap">
+        <div class="orb-ring orb-ring-1"></div>
+        <div class="orb-ring orb-ring-2"></div>
+        <div class="orb" :style="orbStyle">
+          <div class="orb-core"></div>
+        </div>
+        <div class="orb-readout">
+          <div class="phase-label" x-text="running ? phaseLabel : 'Ready'"></div>
+          <div class="phase-count font-display tabular-nums" x-text="running ? countDisplay : techTag"></div>
+          <div class="phase-sub font-mono" x-text="running ? (cyclesSession + (cyclesSession === 1 ? ' breath' : ' breaths')) : techName"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- controls -->
+    <div class="flex items-center justify-center gap-3 mt-8">
+      <button @click="toggle()" class="btn btn-primary px-10 py-4 text-base" x-text="running ? 'Pause' : (cyclesSession > 0 ? 'Resume' : 'Start')"></button>
+      <button @click="reset()" class="share-btn" aria-label="Reset" title="Reset">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.5 12a7.5 7.5 0 107.5-7.5A7.5 7.5 0 006 6.6"/><path d="M5.5 3.5v4h4"/></svg>
+      </button>
+      <button @click="soundOn = !soundOn" class="share-btn" :aria-pressed="soundOn" :title="soundOn ? 'Sound on' : 'Sound off'" aria-label="Toggle sound">
+        <svg x-show="soundOn" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7M18.5 5.5a9 9 0 010 13"/></svg>
+        <svg x-show="!soundOn" x-cloak viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>
+      </button>
+    </div>
+
+    <!-- stats -->
+    <div class="mt-10 pt-8 border-t border-border flex items-center justify-center gap-8">
+      <div>
+        <div class="font-display font-bold text-2xl tabular-nums" x-text="breathsToday"></div>
+        <div class="font-mono text-[10px] tracking-wider uppercase text-text-subtle mt-1">Breaths today</div>
+      </div>
+      <div class="w-px h-10 bg-border"></div>
+      <div>
+        <div class="font-display font-bold text-2xl tabular-nums" x-text="minutesToday + 'm'"></div>
+        <div class="font-mono text-[10px] tracking-wider uppercase text-text-subtle mt-1">Calm minutes</div>
+      </div>
+    </div>
+
+    <p class="text-center text-xs text-text-subtle mt-6 font-mono max-w-md mx-auto leading-relaxed">
+      Breathe gently — never force it. If you feel light-headed, stop and breathe normally. This is a wellness tool, not medical advice.
+    </p>
+
+    <!-- premium hook -->
+    <div class="mt-10 surface-card relative overflow-hidden p-8 md:p-10">
+      <div class="absolute -top-20 right-0 w-[360px] h-[200px] glow-accent pointer-events-none"></div>
+      <div class="relative md:flex items-center justify-between gap-8">
+        <div class="max-w-lg">
+          <div class="eyebrow mb-3">Go further</div>
+          <h2 class="text-2xl md:text-3xl mb-3">Build a calmer nervous system</h2>
+          <p class="text-text-muted leading-relaxed text-[15px]">
+            The breath tool is free forever. Our gentle wellness guides turn it into a daily habit — regulation routines, low-energy day plans and nervous-system-friendly basics, especially for neurodivergent brains.
+          </p>
+        </div>
+        <a href="/guides/neurodivergent-wellness-basics" class="btn btn-primary mt-5 md:mt-0 whitespace-nowrap shrink-0">Read the calm basics →</a>
+      </div>
+    </div>
+  </section>
+
+  <script is:inline>
+    document.addEventListener('alpine:init', () => {
+      const KEY = 'yks:breath:v1';
+      const today = () => new Date().toISOString().slice(0, 10);
+
+      // phase colours
+      const C_IN = '#6ee7ff';   // cyan — inhale
+      const C_HOLD = '#a78bfa'; // violet — hold
+      const C_OUT = '#7dd3fc';  // soft blue — exhale
+      const C_HOLD2 = '#818cf8';// indigo — hold out
+
+      window.Alpine.data('breathApp', () => ({
+        techniques: [
+          { id: 'box', name: 'Box', tag: '4·4·4·4', in: 4, h1: 4, out: 4, h2: 4 },
+          { id: '478', name: '4-7-8', tag: '4·7·8', in: 4, h1: 7, out: 8, h2: 0 },
+          { id: 'coherent', name: 'Coherent', tag: '5.5·5.5', in: 5.5, h1: 0, out: 5.5, h2: 0 },
+          { id: 'triangle', name: 'Triangle', tag: '4·4·4', in: 4, h1: 4, out: 4, h2: 0 },
+          { id: 'calm', name: 'Deep Calm', tag: '4·0·8', in: 4, h1: 0, out: 8, h2: 0 },
+          { id: 'energize', name: 'Energize', tag: '6·0·2', in: 6, h1: 0, out: 2, h2: 0 },
+          { id: 'custom', name: 'Custom', tag: 'your call', in: 4, h1: 4, out: 4, h2: 4 },
+        ],
+        customFields: [
+          { key: 'in', label: 'Inhale' },
+          { key: 'h1', label: 'Hold' },
+          { key: 'out', label: 'Exhale' },
+          { key: 'h2', label: 'Hold' },
+        ],
+        custom: { in: 4, h1: 4, out: 4, h2: 4 },
+        techId: 'box',
+        running: false,
+        phaseIndex: 0,
+        phaseLabel: 'Breathe in',
+        phaseColor: C_IN,
+        phaseTotal: 4,
+        phaseRemaining: 4,
+        orbScale: 0.55,
+        cyclesSession: 0,
+        breathsToday: 0,
+        secondsToday: 0,
+        soundOn: false,
+        _timer: null,
+        _phaseEnd: 0,
+        _lastTick: 0,
+
+        init() {
+          try {
+            const raw = localStorage.getItem(KEY);
+            if (raw) {
+              const d = JSON.parse(raw);
+              if (d.date === today()) {
+                this.breathsToday = d.breaths || 0;
+                this.secondsToday = d.seconds || 0;
+              }
+              if (d.tech) this.techId = d.tech;
+              if (d.custom) this.custom = d.custom;
+              if (typeof d.sound === 'boolean') this.soundOn = d.sound;
+            }
+          } catch (e) { /* ignore */ }
+          document.addEventListener('visibilitychange', () => {
+            if (document.hidden && this.running) this.stop();
+          });
+          this.$watch('soundOn', () => this.persist());
+        },
+
+        get tech() {
+          const t = this.techniques.find((x) => x.id === this.techId) || this.techniques[0];
+          return this.techId === 'custom' ? Object.assign({}, t, this.custom) : t;
+        },
+        get techName() { return (this.techniques.find((x) => x.id === this.techId) || {}).name || ''; },
+        get techTag() {
+          if (this.techId === 'custom') {
+            const c = this.custom;
+            return [c.in, c.h1, c.out, c.h2].filter((n) => n > 0).join('·');
+          }
+          return (this.techniques.find((x) => x.id === this.techId) || {}).tag || '';
+        },
+        get minutesToday() { return Math.floor(this.secondsToday / 60); },
+        get countDisplay() { return String(Math.max(1, Math.ceil(this.phaseRemaining))); },
+        get orbStyle() {
+          return 'transform: scale(' + this.orbScale + ');'
+            + ' transition: transform ' + this.phaseTotal + 's ease-in-out, background ' + Math.min(1.2, this.phaseTotal) + 's ease;';
+        },
+
+        // Build the ordered phase list for the current technique (skip 0s holds).
+        phases() {
+          const t = this.tech;
+          const list = [{ label: 'Breathe in', secs: t.in, scale: 1, color: C_IN }];
+          if (t.h1 > 0) list.push({ label: 'Hold', secs: t.h1, scale: 1, color: C_HOLD });
+          list.push({ label: 'Breathe out', secs: t.out, scale: 0.42, color: C_OUT });
+          if (t.h2 > 0) list.push({ label: 'Hold', secs: t.h2, scale: 0.42, color: C_HOLD2 });
+          return list;
+        },
+
+        selectTech(id) {
+          this.techId = id;
+          this.reset();
+          this.persist();
+        },
+
+        toggle() { this.running ? this.stop() : this.start(); },
+
+        start() {
+          const ph = this.phases();
+          if (!ph.length || ph.every((p) => p.secs <= 0)) return; // custom all-zero guard
+          this.running = true;
+          this._lastTick = Date.now();
+          this.enterPhase(this.phaseIndex % ph.length);
+          this._timer = setInterval(() => this.tick(), 100);
+        },
+
+        enterPhase(i) {
+          const ph = this.phases();
+          const p = ph[i];
+          this.phaseIndex = i;
+          this.phaseLabel = p.label;
+          this.phaseColor = p.color;
+          this.phaseTotal = p.secs;
+          this.phaseRemaining = p.secs;
+          this.orbScale = p.scale;
+          this._phaseEnd = Date.now() + p.secs * 1000;
+          this.chime(p.label);
+        },
+
+        tick() {
+          const now = Date.now();
+          this.secondsToday += (now - this._lastTick) / 1000;
+          this._lastTick = now;
+          this.phaseRemaining = Math.max(0, (this._phaseEnd - now) / 1000);
+          if (this.phaseRemaining <= 0) {
+            const ph = this.phases();
+            let next = this.phaseIndex + 1;
+            if (next >= ph.length) { next = 0; this.cyclesSession++; this.breathsToday++; }
+            this.enterPhase(next);
+          }
+          // persist roughly once a second
+          if (Math.floor(this.secondsToday) % 2 === 0) this.persist();
+        },
+
+        stop() {
+          this.running = false;
+          if (this._timer) clearInterval(this._timer);
+          this.orbScale = 0.5;
+          this.phaseTotal = 0.8;
+          this.persist();
+        },
+
+        reset() {
+          this.stop();
+          this.phaseIndex = 0;
+          this.cyclesSession = 0;
+          this.phaseLabel = 'Breathe in';
+          this.phaseColor = C_IN;
+          this.orbScale = 0.55;
+        },
+
+        persist() {
+          try {
+            localStorage.setItem(KEY, JSON.stringify({
+              date: today(), breaths: this.breathsToday, seconds: Math.round(this.secondsToday),
+              tech: this.techId, custom: this.custom, sound: this.soundOn,
+            }));
+          } catch (e) { /* ignore */ }
+        },
+
+        chime(label) {
+          if (!this.soundOn) return;
+          try {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return;
+            this._ac = this._ac || new AC();
+            const ctx = this._ac;
+            const freq = label === 'Breathe in' ? 396 : label === 'Breathe out' ? 297 : 528;
+            const o = ctx.createOscillator(), g = ctx.createGain();
+            o.connect(g); g.connect(ctx.destination);
+            o.type = 'sine'; o.frequency.value = freq;
+            g.gain.setValueAtTime(0.0001, ctx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.05);
+            g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.6);
+            o.start(); o.stop(ctx.currentTime + 0.6);
+          } catch (e) { /* audio optional */ }
+        },
+      }));
+    });
+  </script>
+
+  <style>
+    .breath-stage {
+      position: relative;
+      height: 420px;
+      border-radius: 28px;
+      overflow: hidden;
+      background: radial-gradient(120% 120% at 50% 30%, #14141a 0%, #0b0b0e 70%);
+      border: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: box-shadow 1.2s ease;
+    }
+    .breath-stage.is-running {
+      box-shadow: inset 0 0 120px -40px var(--phase, #6ee7ff);
+    }
+
+    /* drifting aurora blobs, tinted by the current phase colour */
+    .aurora {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+      opacity: 0.28;
+      background: radial-gradient(circle at center, var(--phase, #6ee7ff) 0%, transparent 70%);
+      transition: background 1s ease, opacity 1.2s ease;
+      pointer-events: none;
+    }
+    .breath-stage.is-running .aurora { opacity: 0.5; }
+    .aurora-a { width: 340px; height: 340px; top: -60px; left: -40px; animation: drift1 18s ease-in-out infinite; }
+    .aurora-b { width: 300px; height: 300px; bottom: -70px; right: -30px; animation: drift2 22s ease-in-out infinite; }
+    .aurora-c { width: 260px; height: 260px; top: 40%; left: 55%; opacity: 0.18; animation: drift3 26s ease-in-out infinite; }
+
+    @keyframes drift1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(40px,30px) scale(1.15); } }
+    @keyframes drift2 { 0%,100% { transform: translate(0,0) scale(1.05); } 50% { transform: translate(-46px,-24px) scale(0.92); } }
+    @keyframes drift3 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-30px,34px) scale(1.2); } }
+
+    /* orb */
+    .orb-wrap {
+      position: relative;
+      width: 280px;
+      height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .orb-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid color-mix(in srgb, var(--phase, #6ee7ff) 45%, transparent);
+      transition: border-color 1s ease;
+    }
+    .orb-ring-1 { width: 280px; height: 280px; opacity: 0.5; }
+    .orb-ring-2 { width: 224px; height: 224px; opacity: 0.7; }
+    .breath-stage.is-running .orb-ring-1 { animation: ringPulse 4s ease-in-out infinite; }
+
+    .orb {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 38% 32%, color-mix(in srgb, var(--phase, #6ee7ff) 90%, white) 0%, var(--phase, #6ee7ff) 42%, color-mix(in srgb, var(--phase, #6ee7ff) 55%, #0b0b0e) 100%);
+      box-shadow: 0 0 60px -6px var(--phase, #6ee7ff), inset 0 0 50px -10px rgba(255,255,255,0.4);
+      transform: scale(0.55);
+      will-change: transform;
+    }
+    .orb-core {
+      position: absolute;
+      inset: 26%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 36%, rgba(255,255,255,0.85), transparent 60%);
+      opacity: 0.55;
+    }
+    .orb-readout {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #fff;
+      text-shadow: 0 1px 10px rgba(0,0,0,0.5);
+      pointer-events: none;
+    }
+    .phase-label { font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.92; }
+    .phase-count { font-size: 56px; font-weight: 800; line-height: 1.05; }
+    .phase-sub { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.7; margin-top: 2px; }
+
+    @keyframes ringPulse { 0%,100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.04); opacity: 0.85; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .aurora { animation: none !important; }
+      .breath-stage.is-running .orb-ring-1 { animation: none; }
+      /* orb still scales (it's the whole point), but instantly settle ambient motion */
+    }
+  </style>
+</BaseLayout>

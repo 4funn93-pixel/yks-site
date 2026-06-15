@@ -8,7 +8,7 @@
  * 'planner' is a faded "coming soon" frame.
  */
 interface Props {
-  variant: 'habit' | 'focus' | 'planner';
+  variant: 'habit' | 'focus' | 'planner' | 'breath';
   label?: string;
   class?: string;
 }
@@ -30,6 +30,7 @@ const C = {
 
 const addr = variant === 'focus' ? 'yks.site/tools/focus-timer'
   : variant === 'planner' ? 'yks.site/tools/weekly-planner'
+  : variant === 'breath' ? 'yks.site/tools/breathing'
   : 'yks.site/tools/habit-tracker';
 
 // habit grid: 1 = filled (lime), 0 = empty
@@ -105,6 +106,26 @@ const rows = [
         <line x1="320" y1="352" x2="320" y2="384" stroke={C.border} />
         <text x="375" y="372" font-family="sans-serif" font-weight="700" font-size="22" fill={C.text} text-anchor="middle">75m</text>
         <text x="375" y="390" font-family="monospace" font-size="9" letter-spacing="1" fill={C.subtle} text-anchor="middle">FOCUSED</text>
+      </g>
+    )}
+
+    {variant === 'breath' && (
+      <g>
+        <text x="320" y="100" font-family="monospace" font-size="11" letter-spacing="2" fill={C.primary} text-anchor="middle">FREE INTERACTIVE TOOL</text>
+        <!-- breathing orb: concentric glow rings -->
+        <circle cx="320" cy="222" r="96" fill="none" stroke={C.border} stroke-width="1.5" opacity="0.7" />
+        <circle cx="320" cy="222" r="74" fill="none" stroke={C.primary} stroke-width="1.5" opacity="0.5" />
+        <circle cx="320" cy="222" r="58" fill={C.primary} opacity="0.12" />
+        <circle cx="320" cy="222" r="58" fill="none" stroke={C.primary} stroke-width="2.5" opacity="0.9" />
+        <text x="320" y="216" font-family="monospace" font-size="11" letter-spacing="3" fill={C.primary} text-anchor="middle">BREATHE IN</text>
+        <text x="320" y="244" font-family="sans-serif" font-weight="700" font-size="26" fill={C.text} text-anchor="middle">4</text>
+        <!-- technique pills -->
+        {['BOX','4-7-8','COHERENT'].map((t, i) => (
+          <g>
+            <rect x={196 + i * 86} y="340" width="76" height="24" rx="12" fill={i === 0 ? C.primary : C.card} stroke={C.border} />
+            <text x={196 + 38 + i * 86} y="356" font-family="monospace" font-size="9" letter-spacing="1" fill={i === 0 ? C.ink : C.muted} text-anchor="middle">{t}</text>
+          </g>
+        ))}
       </g>
     )}
 

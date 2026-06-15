@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" role="img" aria-label="Low-effort meals for low-energy days">
+  <rect width="600" height="450" fill="#0e0e11"/>
+  <g stroke="#1c1c21" stroke-width="1"><path d="M0 112H600M0 224H600M0 336H600"/></g>
+  <text x="48" y="70" fill="#71717a" font-family="monospace" font-size="15" letter-spacing="4">LOW SPOON · LOW EFFORT</text>
+  <!-- steam -->
+  <g stroke="#c7f73e" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.8">
+    <path d="M262 150 C250 134 274 126 262 108"/>
+    <path d="M300 146 C288 130 312 122 300 104"/>
+    <path d="M338 150 C326 134 350 126 338 108"/>
+  </g>
+  <!-- bowl -->
+  <path d="M180 210 H420 A120 120 0 0 1 180 210 Z" fill="#131316" stroke="#26262c" stroke-width="2"/>
+  <path d="M180 210 H420" stroke="#c7f73e" stroke-width="6" stroke-linecap="round"/>
+  <ellipse cx="300" cy="210" rx="120" ry="20" fill="#c7f73e" opacity="0.14"/>
+  <!-- spoon -->
+  <g stroke="#71717a" stroke-width="5" stroke-linecap="round" fill="none">
+    <path d="M452 196 V322"/>
+    <ellipse cx="452" cy="176" rx="16" ry="22" fill="#131316" stroke="#71717a" stroke-width="4"/>
+  </g>
+  <text x="48" y="406" fill="#a1a1aa" font-family="sans-serif" font-size="26" font-weight="700">Low-Effort Meals</text>
+</svg>
