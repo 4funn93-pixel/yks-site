@@ -33,6 +33,22 @@ costs money later — skip it for testing and use the free `*.netlify.app` URL.
 
 - [ ] Code is on the partner's GitHub, branch `main`.
 
+> ⚠️ **Netlify free plan = ONE Git contributor on PRIVATE repos.** If the repo is
+> private, Netlify's free plan only builds commits from a single linked
+> contributor; any other commit author fails the build with *"unrecognized Git
+> contributor."* This bites two ways here: (1) commits authored by the neutral
+> `YKS Team` identity aren't the partner's linked account, and (2) two CMS editors
+> = two contributors. **You can have any two of: private code · two editors · $0.**
+> - **$0 + two editors → make the repo PUBLIC** (safe: no secrets are committed;
+>   all secrets live in Netlify env vars). Keep **premium PDFs out** of a public
+>   repo — see [PRO.md](PRO.md).
+> - **Private + two editors → Netlify Pro** (~$19/mo, everything else unchanged).
+> - **Private + $0 → deploy via GitHub Actions/CLI** instead of Netlify's Git
+>   integration (the contributor check only applies to git-linked builds; more setup).
+>
+> Do **not** rely on toggling public→private per deploy — it re-breaks on the next
+> push and on every editor's CMS save.
+
 ## 2. Connect Netlify (free)  (~5 min)
 
 1. **Partner** logs in to Netlify (free) → **Add new site → Import an existing project → GitHub** → pick `yks-site`.

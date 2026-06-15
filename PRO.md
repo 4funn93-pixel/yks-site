@@ -58,6 +58,25 @@ Lemon Squeezy is digital-only, which is exactly right here — Pro is digital.
    `proOnly: true` instead. Files under `/downloads/pro/*` are gated by the edge
    function, so they're only reachable by members.
 
+   > ⚠️ **Premium files + repo visibility — read before committing paid PDFs.**
+   > The edge gate protects the live **URL**, not the **repo source**. Committing
+   > real premium PDFs to `public/downloads/pro/` is therefore **only safe on a
+   > PRIVATE repo**. On a **public** repo those files are readable straight from
+   > Git (and its history) by anyone, gate or no gate.
+   >
+   > This site is currently on a **public** repo (the free path around Netlify's
+   > one-contributor limit on private repos — see [DEPLOY.md](DEPLOY.md)). So
+   > before you sell Pro, pick one:
+   > - **Keep the repo private** → upgrade to **Netlify Pro** (unlimited
+   >   contributors), and committing gated PDFs here is fine as written above; **or**
+   > - **Stay public/free** → do **not** commit premium PDFs. Host them in
+   >   external storage and have `pro-login.mjs` hand back a short-lived **signed
+   >   URL** instead of serving a committed file. (Ask and I'll wire this up.)
+   >
+   > Either way: **never** `git add` a real paid PDF while the repo is public.
+   > A placeholder `README.txt` is the only thing that belongs in
+   > `public/downloads/pro/` until then.
+
 5. **Deploy.** Netlify auto-detects `netlify/functions` and `netlify/edge-functions`.
    To test locally with functions running, use `netlify dev` (not `astro dev`,
    which doesn't run the edge gate — pages are reachable locally without it).
