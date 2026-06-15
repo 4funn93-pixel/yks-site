@@ -41,11 +41,11 @@ const pool = [
 
 // Fan-out positions for the 5 revealed stickers.
 const fan = [
-  { tx: -120, ty: -52, rot: -16 },
-  { tx: -62, ty: -98, rot: -8 },
-  { tx: 0, ty: -120, rot: 0 },
-  { tx: 62, ty: -98, rot: 8 },
-  { tx: 120, ty: -52, rot: 16 },
+  { tx: -150, ty: -64, rot: -16 },
+  { tx: -78, ty: -120, rot: -8 },
+  { tx: 0, ty: -148, rot: 0 },
+  { tx: 78, ty: -120, rot: 8 },
+  { tx: 150, ty: -64, rot: 16 },
 ];
 
 const boxes = [0, 1, 2];
@@ -63,25 +63,29 @@ const cooldownDays = 7;
 
 <section
   id="weekly-drop"
-  class="relative overflow-hidden border-y border-border bg-bg-elevated py-20 scroll-mt-20"
+  class="relative overflow-hidden border-y border-border bg-bg-elevated py-24 scroll-mt-20"
   x-data="stickerDrop"
 >
-  <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-[700px] h-[360px] glow-accent pointer-events-none"></div>
+  <div class="absolute inset-0 bg-grid opacity-60 pointer-events-none"></div>
+  <div class="absolute -top-20 left-1/2 -translate-x-1/2 w-[860px] h-[440px] glow-accent pointer-events-none"></div>
   <div class="relative max-w-6xl mx-auto px-6">
-    <div class="text-center mb-10">
-      <Mascot pose="wink" class="w-12 h-12 mx-auto mb-3 text-primary" title="Smallz with this week's drop" />
-      <div class="eyebrow mb-3">Weekly sticker drop</div>
-      <h2 class="text-3xl md:text-4xl">Pick one box</h2>
-      <p class="text-text-muted leading-relaxed mt-3 max-w-md mx-auto" x-show="!locked" x-cloak>
-        One free pick a week. Choose a mystery box and see what you pull.
+    <div class="text-center mb-12">
+      <Mascot pose="wink" class="w-16 h-16 mx-auto mb-3 text-primary" title="Smallz with this week's drop" />
+      <div class="chip mb-4">
+        <span class="dot"></span>
+        100% free · new box every week
+      </div>
+      <h2 class="text-4xl md:text-6xl tracking-tight">Open a <span class="accent-text">free</span> mystery box</h2>
+      <p class="text-text-muted text-lg leading-relaxed mt-4 max-w-lg mx-auto" x-show="!locked" x-cloak>
+        Pick one of the three boxes below and pull 5 surprise stickers — yours to print, free. One pick a week.
       </p>
-      <p class="text-text-muted leading-relaxed mt-3 max-w-md mx-auto" x-show="locked" x-cloak>
+      <p class="text-text-muted text-lg leading-relaxed mt-4 max-w-lg mx-auto" x-show="locked" x-cloak>
         You've opened this week's box. Next drop in
-        <span class="text-primary font-medium" x-text="remaining"></span>.
+        <span class="text-primary font-semibold" x-text="remaining"></span>.
       </p>
     </div>
 
-    <div class="grid sm:grid-cols-3 gap-4">
+    <div class="grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
       {boxes.map((n) => (
         <div
           class="giftwrap"
@@ -128,8 +132,8 @@ const cooldownDays = 7;
             </template>
             <template x-if={`chosen !== ${n}`}>
               <div>
-                <div class="font-display font-semibold text-lg tracking-tight">Mystery box</div>
-                <p class="text-sm text-text-subtle mt-0.5" x-text="locked ? 'Locked' : 'Tap to open'"></p>
+                <div class="font-display font-semibold text-xl tracking-tight">Mystery box</div>
+                <p class="text-sm mt-1 font-mono tracking-wider uppercase" :class="locked ? 'text-text-subtle' : 'text-primary'" x-text="locked ? 'Locked' : 'Tap to open →'"></p>
               </div>
             </template>
           </div>
@@ -329,7 +333,7 @@ const cooldownDays = 7;
 <style>
   .giftwrap {
     position: relative;
-    padding-top: 140px;
+    padding-top: 180px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -340,8 +344,8 @@ const cooldownDays = 7;
   /* ---- gift box ---- */
   .gift {
     position: relative;
-    width: 150px;
-    height: 110px;
+    width: 196px;
+    height: 144px;
     background: none;
     border: 0;
     padding: 0;
@@ -349,24 +353,29 @@ const cooldownDays = 7;
     display: block;
   }
   .gift[disabled] { cursor: not-allowed; }
+  /* Idle: unopened, available boxes gently float + glow-pulse to draw the eye. */
+  .giftwrap:not(.is-dimmed):not(.is-open) .gift { animation: giftFloat 3s ease-in-out infinite; }
+  .giftwrap:nth-child(2):not(.is-dimmed):not(.is-open) .gift { animation-delay: 0.45s; }
+  .giftwrap:nth-child(3):not(.is-dimmed):not(.is-open) .gift { animation-delay: 0.9s; }
   .gift-body {
     position: absolute;
-    left: 20px;
+    left: 26px;
     bottom: 0;
-    width: 110px;
-    height: 78px;
-    border-radius: 12px;
+    width: 144px;
+    height: 102px;
+    border-radius: 14px;
     background: linear-gradient(165deg, #d6ff63 0%, #aee61f 100%);
-    box-shadow: inset 0 -8px 16px rgba(0, 0, 0, 0.14), 0 12px 24px -12px rgba(199, 247, 62, 0.5);
+    box-shadow: inset 0 -10px 20px rgba(0, 0, 0, 0.14), 0 14px 28px -12px rgba(199, 247, 62, 0.5);
     transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
   }
+  .giftwrap:not(.is-dimmed):not(.is-open) .gift-body { animation: giftGlow 3s ease-in-out infinite; }
   .gift-body::after {
     content: '';
     position: absolute;
     left: 50%;
     top: 0;
     transform: translateX(-50%);
-    width: 18px;
+    width: 24px;
     height: 100%;
     background: rgba(16, 16, 18, 0.16);
   }
@@ -378,7 +387,7 @@ const cooldownDays = 7;
     justify-content: center;
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 34px;
+    font-size: 46px;
     color: rgba(16, 16, 18, 0.55);
     transition: opacity 0.3s ease;
     z-index: 2;
@@ -386,13 +395,13 @@ const cooldownDays = 7;
   .qmark.hide { opacity: 0; }
   .gift-lid {
     position: absolute;
-    left: 8px;
-    top: 22px;
-    width: 134px;
-    height: 26px;
-    border-radius: 9px;
+    left: 10px;
+    top: 28px;
+    width: 176px;
+    height: 34px;
+    border-radius: 11px;
     background: linear-gradient(165deg, #c7f73e 0%, #9fe838 100%);
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.28);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
     transform-origin: center bottom;
     transition: transform 0.5s cubic-bezier(0.2, 1.3, 0.32, 1), opacity 0.45s ease;
     z-index: 4;
@@ -403,35 +412,44 @@ const cooldownDays = 7;
     left: 50%;
     top: 0;
     transform: translateX(-50%);
-    width: 18px;
+    width: 24px;
     height: 100%;
     background: rgba(16, 16, 18, 0.16);
   }
   .bow {
     position: absolute;
     left: 50%;
-    top: -15px;
+    top: -19px;
     transform: translateX(-50%);
-    width: 40px;
-    height: 24px;
+    width: 52px;
+    height: 31px;
   }
   .lock {
     position: absolute;
-    right: 18px;
-    bottom: 8px;
+    right: 22px;
+    bottom: 10px;
     z-index: 5;
     color: rgba(16, 16, 18, 0.6);
   }
-  .gift:not([disabled]):hover .gift-lid { transform: translateY(-3px) rotate(-2deg); }
+  .gift:not([disabled]):hover .gift-lid { transform: translateY(-4px) rotate(-2deg); }
   .gift:not([disabled]):hover .gift-body { transform: translateY(1px); }
 
-  .is-open .gift-lid { transform: translateY(-58px) rotate(-14deg); opacity: 0; }
-  .is-open .gift-body { transform: translateY(4px); }
+  .is-open .gift-lid { transform: translateY(-76px) rotate(-14deg); opacity: 0; }
+  .is-open .gift-body { transform: translateY(5px); }
+
+  @keyframes giftFloat {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-7px); }
+  }
+  @keyframes giftGlow {
+    0%, 100% { box-shadow: inset 0 -10px 20px rgba(0, 0, 0, 0.14), 0 14px 28px -12px rgba(199, 247, 62, 0.5); }
+    50%      { box-shadow: inset 0 -10px 20px rgba(0, 0, 0, 0.14), 0 18px 40px -10px rgba(199, 247, 62, 0.9); }
+  }
 
   /* ---- stickers ---- */
   .stickers {
     position: absolute;
-    top: 140px;
+    top: 180px;
     left: 0;
     right: 0;
     height: 0;
@@ -441,10 +459,10 @@ const cooldownDays = 7;
   .sticker {
     position: absolute;
     left: 50%;
-    top: -32px;
-    width: 64px;
-    height: 64px;
-    border-radius: 16px;
+    top: -36px;
+    width: 72px;
+    height: 72px;
+    border-radius: 18px;
     border: 3px solid #fff;
     display: flex;
     flex-direction: column;
@@ -502,7 +520,8 @@ const cooldownDays = 7;
 
   @media (prefers-reduced-motion: reduce) {
     .gift-lid, .gift-body, .sticker { transition: none; }
-    .is-open .gift-lid { opacity: 0; transform: translateY(-58px); }
+    .is-open .gift-lid { opacity: 0; transform: translateY(-76px); }
     .sparks i { display: none; }
+    .giftwrap .gift, .giftwrap .gift-body { animation: none !important; }
   }
 </style>
