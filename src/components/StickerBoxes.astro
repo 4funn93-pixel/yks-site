@@ -433,6 +433,14 @@ const cooldownDays = 7;
   }
   .gift:not([disabled]):hover .gift-lid { transform: translateY(-4px) rotate(-2deg); }
   .gift:not([disabled]):hover .gift-body { transform: translateY(1px); }
+  /* Hover = "something's rattling in here": the whole box wiggles + bow bobs,
+     overriding the idle float so the anticipation reads clearly. */
+  .giftwrap:not(.is-dimmed):not(.is-open) .gift:not([disabled]):hover {
+    animation: giftRattle 0.5s ease-in-out infinite;
+  }
+  .gift:not([disabled]):hover .bow { animation: bowBob 0.5s ease-in-out infinite; }
+  /* Tactile press: the box squashes down when you commit to opening it. */
+  .gift:not([disabled]):active { transform: scale(0.95); }
 
   .is-open .gift-lid { transform: translateY(-76px) rotate(-14deg); opacity: 0; }
   .is-open .gift-body { transform: translateY(5px); }
@@ -440,6 +448,15 @@ const cooldownDays = 7;
   @keyframes giftFloat {
     0%, 100% { transform: translateY(0); }
     50%      { transform: translateY(-7px); }
+  }
+  @keyframes giftRattle {
+    0%, 100% { transform: translateY(-2px) rotate(0deg); }
+    25%      { transform: translateY(-2px) rotate(-2.2deg); }
+    75%      { transform: translateY(-2px) rotate(2.2deg); }
+  }
+  @keyframes bowBob {
+    0%, 100% { transform: translateX(-50%) translateY(0) rotate(0deg); }
+    50%      { transform: translateX(-50%) translateY(-3px) rotate(-4deg); }
   }
   @keyframes giftGlow {
     0%, 100% { box-shadow: inset 0 -10px 20px rgba(0, 0, 0, 0.14), 0 14px 28px -12px rgba(199, 247, 62, 0.5); }
@@ -522,6 +539,7 @@ const cooldownDays = 7;
     .gift-lid, .gift-body, .sticker { transition: none; }
     .is-open .gift-lid { opacity: 0; transform: translateY(-76px); }
     .sparks i { display: none; }
-    .giftwrap .gift, .giftwrap .gift-body { animation: none !important; }
+    .giftwrap .gift, .giftwrap .gift-body, .giftwrap .bow { animation: none !important; }
+    .gift:not([disabled]):active { transform: none; }
   }
 </style>

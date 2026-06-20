@@ -11,6 +11,7 @@ import GuideCard from '../components/GuideCard.astro';
 import StickerBoxes from '../components/StickerBoxes.astro';
 import ToolMockup from '../components/ToolMockup.astro';
 import MascotPeek from '../components/MascotPeek.astro';
+import BoneDrop from '../components/BoneDrop.astro';
 import { getCollection } from 'astro:content';
 
 const guides = await getCollection('guides', ({ data }) => !data.draft);
@@ -315,4 +316,7 @@ const trustFacts = [
 
   <!-- Smallz — interactive corner mascot (homepage only) -->
   <MascotPeek />
+
+  <!-- Smallz "throws you a bone" — catch the floating bone for a surprise discount -->
+  <BoneDrop />
 </BaseLayout>
