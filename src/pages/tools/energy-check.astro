@@ -1,0 +1,332 @@
+---
+/**
+ * Energy & Mood Check-in — free interactive "spoons" tracker.
+ *
+ * A 10-second daily check-in: how many spoons (energy) do you have, and how's
+ * your mood? Logs a dated history in the browser, shows a 14-day energy strip
+ * and a gentle weekly summary, and pairs with the Weekly Planner's energy tags.
+ * Shame-free, built for neurodivergent brains. No signup.
+ *
+ * Interactive Alpine component registered in a <script is:inline> in PLAIN JS —
+ * see the site's Alpine convention (weekly-planner.astro / brain-dump.astro).
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Free Energy & Mood Check-in',
+  applicationCategory: 'HealthApplication',
+  operatingSystem: 'Any (web browser)',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  description: 'A free daily energy (spoons) and mood check-in. Log how you feel in seconds, see a 14-day history, and plan around your real energy. Saves in your browser, no signup.',
+};
+---
+
+<BaseLayout
+  title="Free Energy & Mood Check-in — Track Your Spoons"
+  description="A free 10-second daily check-in for energy (spoons) and mood. Log how you feel, watch a 14-day history build, and plan around your real capacity. Shame-free, built for neurodivergent brains. No signup."
+  canonical="/tools/energy-check"
+  jsonLd={jsonLd}
+>
+  <section class="max-w-2xl mx-auto px-6 pt-12 pb-6">
+    <a href="/tools" class="font-mono text-[11px] tracking-wider text-text-subtle hover:text-primary transition-colors">← All tools</a>
+    <div class="mt-5">
+      <div class="eyebrow mb-3">Free interactive tool</div>
+      <h1 class="text-4xl md:text-5xl">How are your spoons?</h1>
+      <p class="mt-3 text-text-muted max-w-xl leading-relaxed">
+        A 10-second check-in. Log your energy and mood, build a picture over time,
+        and plan around your <em>actual</em> capacity instead of the day you wish
+        you were having. No judgement, no streak-shaming. Saves in your browser.
+      </p>
+    </div>
+  </section>
+
+  <section class="max-w-2xl mx-auto px-6 pb-24" x-data="energyCheck" x-cloak>
+    <!-- check-in card -->
+    <div class="surface-card p-6 md:p-7">
+      <div class="eyebrow mb-3">Right now, my energy is…</div>
+      <div class="flex gap-2 mb-6">
+        <template x-for="lvl in energyLevels" :key="lvl.v">
+          <button
+            type="button"
+            @click="energy = lvl.v"
+            class="energy-btn"
+            :class="energy === lvl.v && 'is-on'"
+            :style="energy === lvl.v ? `background:${lvl.c};border-color:${lvl.c}` : ''"
+            :aria-pressed="energy === lvl.v"
+            :aria-label="lvl.label">
+            <span class="energy-num" :style="energy === lvl.v ? 'color:#0a0a0b' : ''" x-text="lvl.v"></span>
+            <span class="energy-lab" :style="energy === lvl.v ? 'color:#0a0a0b' : ''" x-text="lvl.label"></span>
+          </button>
+        </template>
+      </div>
+
+      <div class="eyebrow mb-3">…and my mood is</div>
+      <div class="flex flex-wrap gap-2 mb-6">
+        <template x-for="(m, i) in moods" :key="i">
+          <button
+            type="button"
+            @click="mood = i"
+            class="mood-btn"
+            :class="mood === i && 'is-on'"
+            :aria-pressed="mood === i"
+            :aria-label="m.label">
+            <span class="mood-emoji" x-text="m.e"></span>
+            <span class="mood-lab" x-text="m.label"></span>
+          </button>
+        </template>
+      </div>
+
+      <input
+        x-model="note"
+        type="text"
+        maxlength="120"
+        placeholder="Anything worth noting? (optional)"
+        class="w-full bg-bg border border-border focus:border-primary rounded-full px-5 py-2.5 text-sm placeholder:text-text-subtle outline-none transition-colors mb-4"
+        aria-label="Optional note"
+        @keydown.enter="log()"
+      />
+
+      <button type="button" @click="log()" class="btn btn-primary w-full justify-center py-3.5">Log this check-in</button>
+    </div>
+
+    <!-- stats -->
+    <div x-show="entries.length" x-cloak class="grid grid-cols-3 gap-3 mt-5">
+      <div class="surface-card p-4 text-center">
+        <div class="font-display font-bold text-2xl tabular-nums" x-text="checkinStreak"></div>
+        <div class="font-mono text-[10px] tracking-wider uppercase text-text-subtle mt-1">Day streak</div>
+      </div>
+      <div class="surface-card p-4 text-center">
+        <div class="font-display font-bold text-2xl tabular-nums" x-text="weekAvg || '—'"></div>
+        <div class="font-mono text-[10px] tracking-wider uppercase text-text-subtle mt-1">Week avg energy</div>
+      </div>
+      <div class="surface-card p-4 text-center">
+        <div class="font-display font-bold text-2xl tabular-nums" x-text="entries.length"></div>
+        <div class="font-mono text-[10px] tracking-wider uppercase text-text-subtle mt-1">Check-ins</div>
+      </div>
+    </div>
+
+    <!-- 14-day energy strip -->
+    <div x-show="entries.length" x-cloak class="surface-card p-6 mt-5">
+      <div class="flex items-center justify-between mb-4">
+        <div class="eyebrow">Last 14 days</div>
+        <div class="font-mono text-[10px] tracking-wider uppercase text-text-subtle">energy</div>
+      </div>
+      <div class="flex items-end gap-1.5 h-24">
+        <template x-for="d in last14" :key="d.date">
+          <div class="flex-1 flex flex-col items-center justify-end gap-1.5 group" :title="d.label + (d.avg ? ' · energy ' + d.avg : ' · no check-in')">
+            <div class="day-bar" :style="d.avg ? `height:${d.avg * 18 + 6}px;background:${energyColor(d.avg)}` : 'height:4px;background:var(--color-border)'"></div>
+            <span class="font-mono text-[8px] text-text-subtle" x-text="d.dow"></span>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- recent entries -->
+    <div x-show="entries.length" x-cloak class="mt-5">
+      <div class="eyebrow mb-3">Recent check-ins</div>
+      <ul class="space-y-2">
+        <template x-for="e in recent" :key="e.id">
+          <li class="surface-card flex items-center gap-3 px-4 py-2.5">
+            <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="`background:${energyColor(e.energy)}`"></span>
+            <span class="text-lg" x-text="moods[e.mood].e"></span>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm truncate" x-text="e.note || (moods[e.mood].label + ' · ' + energyLevels[e.energy-1].label + ' energy')"></div>
+              <div class="font-mono text-[10px] text-text-subtle" x-text="e.when"></div>
+            </div>
+            <button type="button" @click="removeEntry(e.id)" class="text-text-subtle hover:text-rose-400 text-xs shrink-0" aria-label="Delete check-in">✕</button>
+          </li>
+        </template>
+      </ul>
+    </div>
+
+    <!-- empty state -->
+    <p x-show="!entries.length" x-cloak class="text-center text-sm text-text-subtle mt-6 max-w-sm mx-auto leading-relaxed">
+      Log your first check-in above. There's no wrong answer — a "1 spoon, struggling" day is just as useful to see as a good one.
+    </p>
+
+    <!-- premium hook -->
+    <div class="mt-14 surface-card relative overflow-hidden p-8 md:p-10 print:hidden">
+      <div class="absolute -top-20 right-0 w-[360px] h-[200px] glow-accent pointer-events-none"></div>
+      <div class="relative md:flex items-center justify-between gap-8">
+        <div class="max-w-lg">
+          <div class="eyebrow mb-3">Use what you learn</div>
+          <h2 class="text-2xl md:text-3xl mb-3">Plan around your energy, not against it</h2>
+          <p class="text-text-muted leading-relaxed text-[15px]">
+            Once you can see your pattern, match your tasks to it. Tag blocks by the
+            energy they need in the free <a href="/tools/weekly-planner" class="text-primary underline underline-offset-4">Weekly Planner</a>,
+            and read the Divergent Daily Living guide for a full energy-aware system.
+          </p>
+        </div>
+        <a href="/guides/divergent-daily-living-guide" class="btn btn-primary mt-5 md:mt-0 whitespace-nowrap shrink-0">Read the guide →</a>
+      </div>
+    </div>
+  </section>
+
+  <script is:inline>
+    document.addEventListener('alpine:init', () => {
+      const KEY = 'yks:energy:v1';
+      const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      const ymd = (d) => d.toISOString().slice(0, 10);
+
+      window.Alpine.data('energyCheck', () => ({
+        energyLevels: [
+          { v: 1, label: 'Empty', c: '#fb7185' },
+          { v: 2, label: 'Low', c: '#fb923c' },
+          { v: 3, label: 'Some', c: '#fbbf24' },
+          { v: 4, label: 'Good', c: '#a3e635' },
+          { v: 5, label: 'Full', c: '#c7f73e' },
+        ],
+        moods: [
+          { e: '😣', label: 'Struggling' },
+          { e: '😕', label: 'Low' },
+          { e: '😐', label: 'Meh' },
+          { e: '🙂', label: 'Okay' },
+          { e: '😄', label: 'Good' },
+        ],
+        entries: [],
+        energy: 3,
+        mood: 3,
+        note: '',
+
+        init() {
+          try {
+            const raw = localStorage.getItem(KEY);
+            if (raw) {
+              const d = JSON.parse(raw);
+              this.entries = Array.isArray(d.entries) ? d.entries : [];
+            }
+          } catch (e) { /* ignore corrupt state */ }
+        },
+
+        log() {
+          const now = new Date();
+          this.entries.unshift({
+            id: uid(),
+            ts: now.toISOString(),
+            date: ymd(now),
+            energy: this.energy,
+            mood: this.mood,
+            note: this.note.trim(),
+          });
+          this.note = '';
+          this.persist();
+          if (window.showToast) window.showToast('Logged. Thanks for checking in 💛');
+        },
+
+        removeEntry(id) {
+          this.entries = this.entries.filter((e) => e.id !== id);
+          this.persist();
+        },
+
+        energyColor(v) {
+          const lvl = this.energyLevels[Math.round(v) - 1];
+          return lvl ? lvl.c : 'var(--color-border)';
+        },
+
+        get recent() { return this.entries.slice(0, 8).map((e) => ({ ...e, when: this.fmt(e.ts) })); },
+
+        get last14() {
+          const days = [];
+          const today = new Date();
+          for (let i = 13; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(today.getDate() - i);
+            const key = ymd(d);
+            const dayEntries = this.entries.filter((e) => e.date === key);
+            const avg = dayEntries.length
+              ? Math.round((dayEntries.reduce((a, e) => a + e.energy, 0) / dayEntries.length) * 10) / 10
+              : 0;
+            days.push({
+              date: key,
+              avg,
+              dow: d.toLocaleDateString('en-US', { weekday: 'narrow' }),
+              label: d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+            });
+          }
+          return days;
+        },
+
+        get checkinStreak() {
+          // consecutive days (ending today or yesterday) with at least one check-in
+          const dates = new Set(this.entries.map((e) => e.date));
+          let streak = 0;
+          const cur = new Date();
+          // allow the streak to count if today not yet logged but yesterday was
+          if (!dates.has(ymd(cur))) cur.setDate(cur.getDate() - 1);
+          while (dates.has(ymd(cur))) {
+            streak++;
+            cur.setDate(cur.getDate() - 1);
+          }
+          return streak;
+        },
+
+        get weekAvg() {
+          const cutoff = new Date();
+          cutoff.setDate(cutoff.getDate() - 6);
+          const wk = this.entries.filter((e) => new Date(e.ts) >= cutoff);
+          if (!wk.length) return 0;
+          return Math.round((wk.reduce((a, e) => a + e.energy, 0) / wk.length) * 10) / 10;
+        },
+
+        fmt(ts) {
+          const d = new Date(ts);
+          const today = ymd(new Date());
+          const y = new Date(); y.setDate(y.getDate() - 1);
+          const day = ymd(d) === today ? 'Today' : ymd(d) === ymd(y) ? 'Yesterday'
+            : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          return day + ' · ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        },
+
+        persist() {
+          try { localStorage.setItem(KEY, JSON.stringify({ entries: this.entries })); }
+          catch (e) { /* storage may be unavailable */ }
+        },
+      }));
+    });
+  </script>
+
+  <style>
+    .energy-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 0.7rem 0.25rem;
+      border-radius: 14px;
+      border: 1px solid var(--color-border);
+      background: var(--color-bg);
+      transition: transform 0.12s ease, border-color 0.15s ease;
+    }
+    .energy-btn:hover { transform: translateY(-2px); border-color: var(--color-text-subtle); }
+    .energy-num { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; line-height: 1; }
+    .energy-lab { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-subtle); }
+    .energy-btn.is-on .energy-lab { color: #0a0a0b; }
+
+    .mood-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0.45rem 0.8rem;
+      border-radius: 999px;
+      border: 1px solid var(--color-border);
+      background: var(--color-bg);
+      font-size: 0.8rem;
+      transition: all 0.15s ease;
+    }
+    .mood-btn:hover { border-color: var(--color-text-subtle); }
+    .mood-btn.is-on { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 12%, transparent); }
+    .mood-emoji { font-size: 1.1rem; line-height: 1; }
+    .mood-lab { color: var(--color-text-muted); }
+
+    .day-bar { width: 100%; max-width: 22px; border-radius: 5px; transition: height 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .energy-btn:hover { transform: none; }
+      .day-bar { transition: none; }
+    }
+    @media print { .energy-btn, .mood-btn, button, input { display: none !important; } }
+  </style>
+</BaseLayout>
