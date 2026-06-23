@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection, render } from 'astro:content';
+import { SITE } from '../../config/site';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog', ({ data }) => !data.draft);
@@ -14,9 +15,35 @@ const { post } = Astro.props;
 const { data } = post;
 const { Content } = await render(post);
 
-const relatedGuides = (await getCollection('guides', ({ data: d }) => !d.draft)).filter(g => 
+const relatedGuides = (await getCollection('guides', ({ data: d }) => !d.draft)).filter(g =>
   g.data.tags.some(t => data.tags.includes(t)) || g.data.category.toLowerCase().includes(data.category.toLowerCase())
 ).slice(0, 2);
+
+// BlogPosting structured data — lets search + AI engines attribute the author,
+// publish date and section, and cite the article cleanly.
+const ogImg = data.coverImage?.src?.endsWith('.svg') ? '/og/default-og.jpg' : data.coverImage?.src;
+const articleJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: data.title,
+  description: data.description,
+  image: `${SITE.url}${ogImg}`,
+  datePublished: data.publishedAt.toISOString(),
+  dateModified: (data.updatedAt ?? data.publishedAt).toISOString(),
+  author: {
+    '@type': 'Person',
+    name: data.author,
+    ...(data.authorRole ? { jobTitle: data.authorRole } : {}),
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: SITE.name,
+    logo: { '@type': 'ImageObject', url: `${SITE.url}/og/logo.png` },
+  },
+  mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE.url}/blog/${data.slug}` },
+  articleSection: data.category,
+  keywords: data.tags.join(', '),
+};
 ---
 
 <BaseLayout
@@ -26,6 +53,7 @@ const relatedGuides = (await getCollection('guides', ({ data: d }) => !d.draft))
   canonical={`/blog/${data.slug}`}
   type="article"
   publishedTime={data.publishedAt.toISOString()}
+  jsonLd={articleJsonLd}
 >
   <article class="max-w-3xl mx-auto px-6 pt-10 pb-24">
     <div class="text-xs uppercase tracking-widest text-primary mb-2">{data.category}</div>
