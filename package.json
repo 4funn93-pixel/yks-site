@@ -9,7 +9,11 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "qa:spell": "cspell \"src/content/**/*.mdx\" \"src/**/*.astro\"",
+    "qa:links": "linkinator http://localhost:4321 --recurse --skip \"yks\\.example\"",
+    "qa:a11y": "pa11y http://localhost:4321/",
+    "qa:lighthouse": "lighthouse http://localhost:4321/ --only-categories=performance,accessibility,seo,best-practices --view"
   },
   "dependencies": {
     "@astrojs/mdx": "^6.0.1",
@@ -21,5 +25,12 @@
     "astro": "^6.4.2",
     "astro-pagefind": "^2.0.0",
     "tailwindcss": "^4.3.0"
+  },
+  "devDependencies": {
+    "cspell": "^10.0.1",
+    "lighthouse": "^13.4.0",
+    "linkinator": "^7.6.1",
+    "pa11y": "^9.1.1",
+    "svgo": "^4.0.1"
   }
 }
