@@ -18,7 +18,7 @@
     // Close mobile on escape
     document.addEventListener('keydown', e => { if (e.key === 'Escape') mobileOpen = false });
   "
-  class="sticky top-0 z-50 border-b transition-all glass"
+  class="sticky top-0 z-50 border-b transition-all glass print:hidden"
   :class="scrolled ? 'border-[var(--color-border)]' : 'border-transparent'"
 >
   <nav class="mx-auto max-w-7xl px-6 flex h-[68px] items-center justify-between">

@@ -116,22 +116,32 @@ const jsonLd = {
       Add your first block above. Plan light — a few anchored blocks beat a packed grid you abandon by Tuesday.
     </p>
 
-    <!-- premium hook -->
-    <div class="mt-14 surface-card relative overflow-hidden p-8 md:p-10 print:hidden">
-      <div class="absolute -top-20 right-0 w-[360px] h-[200px] glow-accent pointer-events-none"></div>
-      <div class="relative md:flex items-center justify-between gap-8">
-        <div class="max-w-lg">
-          <div class="eyebrow mb-3">Go further</div>
-          <h2 class="text-2xl md:text-3xl mb-3">Plan around your energy, not against it</h2>
-          <p class="text-text-muted leading-relaxed text-[15px]">
-            Start each week with a <a href="/tools/brain-dump" class="text-primary underline underline-offset-4">brain dump</a>,
-            then drop the keepers onto the days here. The Divergent Daily Living guide
-            turns it into a sustainable rhythm built for neurodivergent minds.
-          </p>
-        </div>
-        <a href="/guides/divergent-daily-living-guide" class="btn btn-primary mt-5 md:mt-0 whitespace-nowrap shrink-0">Read the guide →</a>
+    <!-- ===== EXPORT (free) + print-ready pack (Pro) =====
+         Freemium pattern: the free export below works today (browser print →
+         "Save as PDF"). The Pro card upsells a designed, fill-in printable pack.
+         When that pack exists, point the Pro button at the gated download
+         (e.g. href="/downloads/pro/weekly-planner-pack.pdf") — the existing
+         netlify/edge-functions/pro-gate.js blocks non-members and sends them to
+         /pro, so no extra auth code is needed. -->
+    <div class="mt-12 grid sm:grid-cols-2 gap-4 print:hidden">
+      <div class="surface-card p-6 flex flex-col">
+        <div class="eyebrow mb-2">Export · free</div>
+        <h2 class="font-display font-semibold text-lg tracking-tight mb-1.5">Print or save your week</h2>
+        <p class="text-sm text-text-muted leading-relaxed flex-1">Your plan prints clean — or use “Save as PDF” in the print dialog. No signup, nothing leaves your browser.</p>
+        <button type="button" @click="window.print()" class="btn btn-secondary text-sm mt-4 self-start py-2.5 px-5">Print / Save as PDF</button>
+      </div>
+      <div class="surface-card p-6 flex flex-col border-primary/30">
+        <div class="eyebrow mb-2">Print-ready pack · <span class="text-primary">Pro</span></div>
+        <h2 class="font-display font-semibold text-lg tracking-tight mb-1.5">The fill-in planner pack</h2>
+        <p class="text-sm text-text-muted leading-relaxed flex-1">YKS Pro members get the designed, print-shop-ready planner pack — weekly, daily and energy-tag templates for the wall or binder.</p>
+        <a href="/pro" class="btn btn-primary text-sm mt-4 self-start py-2.5 px-5">See YKS Pro →</a>
       </div>
     </div>
+
+    <p class="mt-6 text-center text-sm text-text-muted print:hidden">
+      Tip: start the week with a <a href="/tools/brain-dump" class="text-primary underline underline-offset-4">brain dump</a>,
+      check your <a href="/tools/energy-check" class="text-primary underline underline-offset-4">energy</a>, then drop the keepers onto the days here.
+    </p>
   </section>
 
   <script is:inline>
