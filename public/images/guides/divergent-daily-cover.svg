@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" role="img" aria-label="The Divergent Daily — a complete daily living guide for neurodivergent minds">
+  <rect width="600" height="450" fill="#0e0e11"/>
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="46%" r="58%">
+      <stop offset="0%" stop-color="#c7f73e" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#c7f73e" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="450" fill="url(#glow)"/>
+  <text x="48" y="68" fill="#c7f73e" font-family="monospace" font-size="15" letter-spacing="4">PREMIUM · DAILY GUIDE</text>
+
+  <!-- hub-and-spoke "life map": a central mind/day node with six daily-living domains -->
+  <g transform="translate(300,222)">
+    <!-- a single winding attention path threading the domains (a nod to monotropic focus) -->
+    <path d="M-168 36 C-90 -40 -40 80 40 8 C108 -52 132 64 174 -28"
+      fill="none" stroke="#6ee7ff" stroke-width="2.5" opacity="0.45" stroke-linecap="round"/>
+
+    <!-- faint orbit ring -->
+    <circle r="150" fill="none" stroke="#26262c" stroke-width="1.5"/>
+
+    <!-- domain satellites -->
+    <g font-family="monospace" font-size="11" letter-spacing="1" fill="#a1a1aa" text-anchor="middle">
+      <g transform="translate(0,-150)"><circle r="13" fill="#131316" stroke="#84cc16" stroke-width="2"/><text y="-22">REST</text></g>
+      <g transform="translate(130,-75)"><circle r="13" fill="#131316" stroke="#84cc16" stroke-width="2"/><text y="-22">FUEL</text></g>
+      <g transform="translate(130,75)"><circle r="13" fill="#131316" stroke="#84cc16" stroke-width="2"/><text y="32">MOVE</text></g>
+      <g transform="translate(0,150)"><circle r="13" fill="#131316" stroke="#84cc16" stroke-width="2"/><text y="32">SENSE</text></g>
+      <g transform="translate(-130,75)"><circle r="13" fill="#131316" stroke="#84cc16" stroke-width="2"/><text y="32">CONNECT</text></g>
+      <g transform="translate(-130,-75)"><circle r="13" fill="#131316" stroke="#84cc16" stroke-width="2"/><text y="-22">FOCUS</text></g>
+    </g>
+
+    <!-- central node -->
+    <circle r="40" fill="#c7f73e"/>
+    <text y="-1" fill="#0e0e11" font-family="sans-serif" font-size="15" font-weight="700" text-anchor="middle">YOUR</text>
+    <text y="16" fill="#0e0e11" font-family="sans-serif" font-size="15" font-weight="700" text-anchor="middle">DAY</text>
+  </g>
+
+  <text x="48" y="410" fill="#f4f4f5" font-family="sans-serif" font-size="26" font-weight="700">The Divergent Daily</text>
+</svg>
