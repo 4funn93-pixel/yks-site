@@ -108,10 +108,11 @@ const trustFacts = [
         { href: "/tools/habit-tracker", variant: "habit", name: "Habit Tracker", desc: "Tick off your week, build streaks, see completion at a glance. Saves to your browser; print anytime.", tag: "Live", soon: false },
         { href: "/tools/focus-timer", variant: "focus", name: "Focus Timer", desc: "Distraction-free focus sprints with built-in breaks and a daily session count. Deep work, one block at a time.", tag: "Live", soon: false },
         { href: "/tools/breathing", variant: "breath", name: "Breathing", desc: "Follow a calming animated orb through Box, 4-7-8, Coherent and more. Steady your nervous system in minutes.", tag: "Live", soon: false },
+        { href: "/tools/brain-dump", variant: "braindump", name: "Brain Dump", desc: "Empty your head fast, then sort each thought into Now, Next or Later. Built for busy, neurodivergent brains.", tag: "Live", soon: false },
         { href: "/tools", variant: "planner", name: "Weekly Planner", desc: "Time-block your week in a clean grid and export it. In the workshop — more free tools landing soon.", tag: "Soon", soon: true },
       ].map((t, i) => (
         <a href={t.href} class={`guide-card group p-4 flex flex-col reveal ${t.soon ? 'opacity-80' : ''}`} style={`--reveal-delay:${i * 90}ms`}>
-          <ToolMockup variant={t.variant as 'habit' | 'focus' | 'planner' | 'breath'} label={`${t.name} preview`} class="mb-5" />
+          <ToolMockup variant={t.variant as 'habit' | 'focus' | 'planner' | 'breath' | 'braindump'} label={`${t.name} preview`} class="mb-5" />
           <div class="px-3 pb-3 flex flex-col flex-1">
             <div class="flex items-start justify-between mb-2">
               <h3 class="font-display font-semibold text-xl tracking-tight group-hover:text-primary transition-colors">{t.name}</h3>

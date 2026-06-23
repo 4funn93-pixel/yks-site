@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" role="img" aria-label="The brain dump method: empty your head, then sort it">
+  <rect width="600" height="450" fill="#0e0e11"/>
+  <g stroke="#1c1c21" stroke-width="1"><path d="M0 112H600M0 224H600M0 336H600"/></g>
+  <text x="48" y="70" fill="#71717a" font-family="monospace" font-size="15" letter-spacing="4">EMPTY · THEN SORT</text>
+
+  <!-- brain / cloud of noise on the left -->
+  <path d="M120 214 a64 56 0 0 1 18 -44 a40 40 0 0 1 64 -6 a36 36 0 0 1 24 56 a52 52 0 0 1 -52 40 a48 48 0 0 1 -54 -46 z"
+    fill="none" stroke="#26262c" stroke-width="2"/>
+  <g fill="#71717a">
+    <circle cx="150" cy="190" r="4"/><circle cx="178" cy="172" r="4"/><circle cx="200" cy="200" r="4"/>
+    <circle cx="166" cy="214" r="4"/><circle cx="196" cy="230" r="4"/><circle cx="150" cy="236" r="4"/>
+    <circle cx="216" cy="186" r="4"/><circle cx="182" cy="248" r="4"/>
+  </g>
+
+  <!-- flow arrow -->
+  <path d="M256 214 H336" fill="none" stroke="#c7f73e" stroke-width="4" stroke-linecap="round"/>
+  <path d="M330 204 l12 10 l-12 10" fill="none" stroke="#c7f73e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- three sorted columns: Now / Next / Later -->
+  <g>
+    <rect x="372" y="150" width="64" height="128" rx="10" fill="#131316" stroke="#26262c"/>
+    <rect x="384" y="166" width="40" height="10" rx="5" fill="#c7f73e"/>
+    <rect x="384" y="186" width="40" height="8" rx="4" fill="#26262c"/>
+    <rect x="384" y="202" width="30" height="8" rx="4" fill="#26262c"/>
+
+    <rect x="448" y="150" width="64" height="128" rx="10" fill="#131316" stroke="#26262c"/>
+    <rect x="460" y="166" width="40" height="10" rx="5" fill="#84cc16"/>
+    <rect x="460" y="186" width="40" height="8" rx="4" fill="#26262c"/>
+
+    <rect x="524" y="150" width="40" height="128" rx="10" fill="#131316" stroke="#26262c"/>
+    <rect x="532" y="166" width="24" height="10" rx="5" fill="#3f6212"/>
+  </g>
+
+  <text x="48" y="406" fill="#a1a1aa" font-family="sans-serif" font-size="26" font-weight="700">The Brain Dump Method</text>
+</svg>

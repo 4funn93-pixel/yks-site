@@ -4,11 +4,11 @@
  * Renders the dark-first app UI (consistent regardless of page theme, like a
  * real screenshot) with the acid-lime accent. No raster images, no stock.
  *
- * variant: 'habit' | 'focus' | 'planner'
+ * variant: 'habit' | 'focus' | 'planner' | 'breath' | 'braindump'
  * 'planner' is a faded "coming soon" frame.
  */
 interface Props {
-  variant: 'habit' | 'focus' | 'planner' | 'breath';
+  variant: 'habit' | 'focus' | 'planner' | 'breath' | 'braindump';
   label?: string;
   class?: string;
 }
@@ -31,6 +31,7 @@ const C = {
 const addr = variant === 'focus' ? 'yks.site/tools/focus-timer'
   : variant === 'planner' ? 'yks.site/tools/weekly-planner'
   : variant === 'breath' ? 'yks.site/tools/breathing'
+  : variant === 'braindump' ? 'yks.site/tools/brain-dump'
   : 'yks.site/tools/habit-tracker';
 
 // habit grid: 1 = filled (lime), 0 = empty
@@ -124,6 +125,40 @@ const rows = [
           <g>
             <rect x={196 + i * 86} y="340" width="76" height="24" rx="12" fill={i === 0 ? C.primary : C.card} stroke={C.border} />
             <text x={196 + 38 + i * 86} y="356" font-family="monospace" font-size="9" letter-spacing="1" fill={i === 0 ? C.ink : C.muted} text-anchor="middle">{t}</text>
+          </g>
+        ))}
+      </g>
+    )}
+
+    {variant === 'braindump' && (
+      <g>
+        <text x="36" y="92" font-family="monospace" font-size="11" letter-spacing="2" fill={C.primary}>FREE INTERACTIVE TOOL</text>
+        <text x="36" y="120" font-family="sans-serif" font-weight="700" font-size="26" fill={C.text}>Brain dump</text>
+
+        <!-- capture bar -->
+        <rect x="36" y="150" width="462" height="36" rx="18" fill={C.card} stroke={C.border} />
+        <text x="54" y="173" font-family="sans-serif" font-size="13" fill={C.subtle}>What's rattling around?</text>
+        <rect x="508" y="150" width="96" height="36" rx="18" fill={C.primary} />
+        <text x="556" y="173" font-family="sans-serif" font-weight="700" font-size="13" fill={C.ink} text-anchor="middle">Dump it</text>
+
+        <!-- triaged rows: each thought + an active bucket pill -->
+        {[
+          { y: 214, w: 250, active: 0 },
+          { y: 256, w: 320, active: 1 },
+          { y: 298, w: 200, active: 2 },
+          { y: 340, w: 286, active: 0 },
+        ].map((row) => (
+          <g>
+            <rect x="36" y={row.y} width="568" height="32" rx="10" fill={C.card} stroke={C.border} />
+            <rect x="50" y={row.y + 11} width={row.w} height="10" rx="5" fill={C.screen} stroke={C.border} />
+            {['Now','Next','Later'].map((p, i) => (
+              <g>
+                <rect x={388 + i * 70} y={row.y + 6} width="62" height="20" rx="10"
+                  fill={i === row.active ? C.primary : C.screen} stroke={i === row.active ? C.primary : C.border} />
+                <text x={388 + 31 + i * 70} y={row.y + 19} font-family="monospace" font-size="9" letter-spacing="0.5"
+                  fill={i === row.active ? C.ink : C.subtle} text-anchor="middle">{p}</text>
+              </g>
+            ))}
           </g>
         ))}
       </g>

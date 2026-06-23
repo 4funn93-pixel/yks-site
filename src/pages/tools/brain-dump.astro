@@ -1,0 +1,305 @@
+---
+/**
+ * Brain Dump — free interactive capture + triage tool.
+ *
+ * Built for busy / neurodivergent brains: empty your head fast (one box, hit
+ * Enter, repeat), then make ONE tiny decision per thought — Now, Next, Later,
+ * Done, or let it go. Reduces working-memory load instead of adding another
+ * heavy to-do app. Saves to localStorage, prints clean, no signup.
+ *
+ * Interactive Alpine component registered in a <script is:inline> in PLAIN JS —
+ * see the site's Alpine convention (breathing.astro / focus-timer.astro).
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Free Brain Dump Tool',
+  applicationCategory: 'ProductivityApplication',
+  operatingSystem: 'Any (web browser)',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  description: 'A free brain dump + triage tool: empty your head fast, then sort each thought into Now, Next or Later. Saves in your browser, no signup.',
+};
+---
+
+<BaseLayout
+  title="Free Brain Dump Tool — Empty Your Head, Then Sort It"
+  description="A free brain dump tool for busy and neurodivergent brains: capture every loose thought fast, then triage each one into Now, Next or Later. Saves in your browser. No signup."
+  canonical="/tools/brain-dump"
+  jsonLd={jsonLd}
+>
+  <section class="max-w-3xl mx-auto px-6 pt-12 pb-6">
+    <a href="/tools" class="font-mono text-[11px] tracking-wider text-text-subtle hover:text-primary transition-colors">← All tools</a>
+    <div class="mt-5">
+      <div class="eyebrow mb-3">Free interactive tool</div>
+      <h1 class="text-4xl md:text-5xl">Get it out of your head.</h1>
+      <p class="mt-3 text-text-muted max-w-xl leading-relaxed">
+        Dump every loose thought first — don't sort as you go. When your head's
+        empty, make one tiny decision per thought: <strong class="text-text">Now</strong>,
+        <strong class="text-text">Next</strong>, <strong class="text-text">Later</strong>,
+        done, or let it go. Saves in your browser. Nothing sent to a server.
+      </p>
+    </div>
+  </section>
+
+  <section class="max-w-3xl mx-auto px-6 pb-24" x-data="brainDump" x-cloak>
+    <!-- capture bar -->
+    <form @submit.prevent="add()" class="dump-capture flex gap-2">
+      <input
+        x-model="draft"
+        x-ref="capture"
+        type="text"
+        autocomplete="off"
+        enterkeyhint="done"
+        placeholder="What's rattling around? Type it, hit enter, repeat…"
+        class="flex-1 bg-bg border border-border focus:border-primary rounded-full px-5 py-3.5 text-base placeholder:text-text-subtle outline-none transition-colors"
+        aria-label="Add a thought to your brain dump"
+      />
+      <button type="submit" class="btn btn-primary px-6 whitespace-nowrap">Dump it</button>
+    </form>
+    <p class="mt-3 font-mono text-[11px] tracking-wide text-text-subtle flex flex-wrap gap-x-3 gap-y-1 justify-center">
+      <span><span class="text-primary tabular-nums" x-text="captured"></span> captured</span>
+      <span class="text-border">·</span>
+      <span><span class="tabular-nums" x-text="dropped"></span> let go</span>
+      <span class="text-border">·</span>
+      <span>saved in your browser</span>
+    </p>
+
+    <!-- inbox: things still to sort -->
+    <div x-show="inbox.length" x-cloak class="mt-10">
+      <div class="flex items-center justify-between mb-3">
+        <div class="eyebrow">To sort · <span class="text-primary tabular-nums" x-text="inbox.length"></span></div>
+        <span class="font-mono text-[10px] tracking-wider uppercase text-text-subtle">one tiny decision each</span>
+      </div>
+      <ul class="space-y-2">
+        <template x-for="i in inbox" :key="i.id">
+          <li class="dump-item surface-card">
+            <span class="dump-text" x-text="i.text"></span>
+            <div class="dump-actions">
+              <button type="button" class="pill" :class="i.b==='now' && 'on'" @click="move(i.id,'now')">Now</button>
+              <button type="button" class="pill" :class="i.b==='next' && 'on'" @click="move(i.id,'next')">Next</button>
+              <button type="button" class="pill" :class="i.b==='later' && 'on'" @click="move(i.id,'later')">Later</button>
+              <button type="button" class="ico" @click="done(i.id)" title="Done" aria-label="Mark done">✓</button>
+              <button type="button" class="ico drop" @click="drop(i.id)" title="Let it go" aria-label="Let it go">✕</button>
+            </div>
+          </li>
+        </template>
+      </ul>
+    </div>
+
+    <!-- all-clear inbox state -->
+    <div x-show="captured > 0 && !inbox.length" x-cloak class="mt-10 surface-card p-6 text-center">
+      <div class="text-2xl mb-1" aria-hidden="true">🧠</div>
+      <p class="text-sm text-text-muted">Head's clear — everything's sorted. Work the <strong class="text-text">Now</strong> list, ignore the rest guilt-free.</p>
+    </div>
+
+    <!-- the board -->
+    <div class="mt-10 grid sm:grid-cols-3 gap-4" x-show="captured > 0" x-cloak>
+      <template x-for="col in columns" :key="col.b">
+        <div class="dump-col surface-card" :class="col.b">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="font-display font-semibold tracking-tight" x-text="col.label"></h2>
+            <span class="font-mono text-[11px] tabular-nums text-text-subtle" x-text="bucket(col.b).length"></span>
+          </div>
+          <p class="text-xs text-text-subtle mb-3" x-text="col.hint"></p>
+          <ul class="space-y-2">
+            <template x-for="i in bucket(col.b)" :key="i.id">
+              <li class="dump-item is-board">
+                <span class="dump-text" x-text="i.text"></span>
+                <div class="dump-actions">
+                  <button type="button" class="pill" :class="i.b==='now' && 'on'" @click="move(i.id,'now')">N</button>
+                  <button type="button" class="pill" :class="i.b==='next' && 'on'" @click="move(i.id,'next')">Nx</button>
+                  <button type="button" class="pill" :class="i.b==='later' && 'on'" @click="move(i.id,'later')">L</button>
+                  <button type="button" class="ico" @click="done(i.id)" title="Done" aria-label="Mark done">✓</button>
+                  <button type="button" class="ico drop" @click="drop(i.id)" title="Let it go" aria-label="Let it go">✕</button>
+                </div>
+              </li>
+            </template>
+          </ul>
+          <p x-show="!bucket(col.b).length" x-cloak class="text-xs text-text-subtle italic">Nothing here yet.</p>
+        </div>
+      </template>
+    </div>
+
+    <!-- done drawer -->
+    <div x-show="doneItems.length" x-cloak class="mt-8">
+      <button type="button" @click="showDone = !showDone" class="font-mono text-[11px] tracking-wider text-text-subtle hover:text-primary transition-colors inline-flex items-center gap-2">
+        <span x-text="showDone ? 'Hide' : 'Show'"></span> done · <span class="tabular-nums" x-text="doneItems.length"></span>
+        <span x-text="showDone ? '▲' : '▼'" class="text-[8px]"></span>
+      </button>
+      <div x-show="showDone" x-cloak class="mt-3 surface-card p-4">
+        <ul class="space-y-1.5">
+          <template x-for="i in doneItems" :key="i.id">
+            <li class="flex items-center justify-between gap-3 text-sm">
+              <span class="line-through text-text-subtle" x-text="i.text"></span>
+              <div class="flex gap-1.5 shrink-0">
+                <button type="button" class="ico" @click="move(i.id,'now')" title="Bring back" aria-label="Bring back">↩</button>
+                <button type="button" class="ico drop" @click="drop(i.id)" title="Delete" aria-label="Delete">✕</button>
+              </div>
+            </li>
+          </template>
+        </ul>
+        <button type="button" @click="clearDone()" class="mt-3 font-mono text-[10px] tracking-wider uppercase text-text-subtle hover:text-rose-400 transition-colors">Clear done</button>
+      </div>
+    </div>
+
+    <!-- empty first-run state -->
+    <div x-show="captured === 0" x-cloak class="mt-10 text-center text-text-subtle">
+      <p class="text-sm leading-relaxed max-w-sm mx-auto">Start typing above. Get it <em>all</em> down first — the messy, the tiny, the someday-maybe. Sorting comes after.</p>
+    </div>
+
+    <!-- premium hook -->
+    <div class="mt-14 surface-card relative overflow-hidden p-8 md:p-10 print:hidden">
+      <div class="absolute -top-20 right-0 w-[360px] h-[200px] glow-accent pointer-events-none"></div>
+      <div class="relative md:flex items-center justify-between gap-8">
+        <div class="max-w-lg">
+          <div class="eyebrow mb-3">Go further</div>
+          <h2 class="text-2xl md:text-3xl mb-3">A whole system for a busy brain</h2>
+          <p class="text-text-muted leading-relaxed text-[15px]">
+            The brain dump is free forever. Our Divergent Daily Living guide turns it
+            into a daily rhythm — gentle routines, energy-aware planning and
+            executive-function shortcuts made for neurodivergent minds.
+          </p>
+        </div>
+        <a href="/guides/divergent-daily-living-guide" class="btn btn-primary mt-5 md:mt-0 whitespace-nowrap shrink-0">Read the guide →</a>
+      </div>
+    </div>
+  </section>
+
+  <script is:inline>
+    document.addEventListener('alpine:init', () => {
+      const KEY = 'yks:braindump:v1';
+      const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+      window.Alpine.data('brainDump', () => ({
+        items: [],
+        draft: '',
+        captured: 0,
+        dropped: 0,
+        showDone: false,
+        columns: [
+          { b: 'now', label: 'Now', hint: 'Today. Keep it short.' },
+          { b: 'next', label: 'Next', hint: 'Soon, but not right now.' },
+          { b: 'later', label: 'Later', hint: 'Someday / maybe. Park it.' },
+        ],
+
+        init() {
+          try {
+            const raw = localStorage.getItem(KEY);
+            if (raw) {
+              const d = JSON.parse(raw);
+              this.items = Array.isArray(d.items) ? d.items : [];
+              this.captured = d.captured || this.items.length;
+              this.dropped = d.dropped || 0;
+            }
+          } catch (e) { /* ignore corrupt state */ }
+        },
+
+        get inbox() { return this.items.filter((i) => i.b === 'in'); },
+        get doneItems() { return this.items.filter((i) => i.b === 'done'); },
+        bucket(b) { return this.items.filter((i) => i.b === b); },
+
+        add() {
+          const text = this.draft.trim();
+          if (!text) return;
+          this.items.unshift({ id: uid(), text, b: 'in' });
+          this.captured++;
+          this.draft = '';
+          this.persist();
+          // keep focus for rapid-fire dumping
+          this.$nextTick(() => this.$refs.capture && this.$refs.capture.focus());
+        },
+
+        move(id, b) {
+          const it = this.items.find((i) => i.id === id);
+          if (it) { it.b = b; this.persist(); }
+        },
+
+        done(id) { this.move(id, 'done'); },
+
+        drop(id) {
+          const it = this.items.find((i) => i.id === id);
+          if (it && it.b !== 'done') this.dropped++;
+          this.items = this.items.filter((i) => i.id !== id);
+          this.persist();
+        },
+
+        clearDone() {
+          this.items = this.items.filter((i) => i.b !== 'done');
+          this.showDone = false;
+          this.persist();
+        },
+
+        persist() {
+          try {
+            localStorage.setItem(KEY, JSON.stringify({
+              items: this.items, captured: this.captured, dropped: this.dropped,
+            }));
+          } catch (e) { /* storage may be unavailable */ }
+        },
+      }));
+    });
+  </script>
+
+  <style>
+    .dump-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 0.85rem;
+      border-radius: 14px;
+      animation: dumpIn 0.25s ease-out;
+    }
+    .dump-item.is-board { padding: 0.5rem 0.6rem; gap: 0.4rem; flex-wrap: wrap; }
+    .dump-text { flex: 1 1 auto; font-size: 0.95rem; line-height: 1.4; min-width: 0; word-break: break-word; }
+    .is-board .dump-text { font-size: 0.85rem; flex-basis: 100%; }
+    .dump-actions { display: flex; align-items: center; gap: 0.25rem; flex-shrink: 0; }
+
+    .pill {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.03em;
+      padding: 0.28rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid var(--color-border);
+      color: var(--color-text-subtle);
+      transition: all 0.15s ease;
+      line-height: 1;
+    }
+    .pill:hover { color: var(--color-text); border-color: var(--color-text-subtle); }
+    .pill.on { background: var(--color-primary); color: #0a0a0b; border-color: var(--color-primary); }
+
+    .ico {
+      width: 26px;
+      height: 26px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      border: 1px solid var(--color-border);
+      color: var(--color-text-subtle);
+      font-size: 12px;
+      transition: all 0.15s ease;
+    }
+    .ico:hover { color: var(--color-primary); border-color: var(--color-primary); }
+    .ico.drop:hover { color: #fb7185; border-color: #fb7185; }
+
+    .dump-col { padding: 1.1rem; }
+    .dump-col.now { border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border)); }
+
+    @keyframes dumpIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .dump-item { animation: none; }
+    }
+
+    /* clean print: just the thoughts, no chrome */
+    @media print {
+      .dump-capture, .dump-actions, .pill, .ico { display: none !important; }
+      .dump-col { break-inside: avoid; border: 1px solid #ccc; }
+    }
+  </style>
+</BaseLayout>
