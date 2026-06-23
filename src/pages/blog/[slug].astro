@@ -22,7 +22,7 @@ const relatedGuides = (await getCollection('guides', ({ data: d }) => !d.draft))
 <BaseLayout
   title={data.title}
   description={data.description}
-  image={data.coverImage?.src}
+  image={data.coverImage?.src?.endsWith('.svg') ? '/og/default-og.jpg' : data.coverImage?.src}
   canonical={`/blog/${data.slug}`}
   type="article"
   publishedTime={data.publishedAt.toISOString()}

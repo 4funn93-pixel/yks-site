@@ -73,7 +73,7 @@ const jsonLd = {
 <BaseLayout
   title={data.title}
   description={data.description}
-  image={data.coverImage?.src}
+  image={data.coverImage?.src?.endsWith('.svg') ? '/og/default-og.jpg' : data.coverImage?.src}
   canonical={`/guides/${data.slug}`}
   type="product"
   publishedTime={data.publishedAt.toISOString()}
