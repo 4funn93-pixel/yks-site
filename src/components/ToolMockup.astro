@@ -4,11 +4,11 @@
  * Renders the dark-first app UI (consistent regardless of page theme, like a
  * real screenshot) with the acid-lime accent. No raster images, no stock.
  *
- * variant: 'habit' | 'focus' | 'planner' | 'breath' | 'braindump'
+ * variant: 'habit' | 'focus' | 'planner' | 'breath' | 'braindump' | 'breakdown'
  * 'planner' is a faded "coming soon" frame.
  */
 interface Props {
-  variant: 'habit' | 'focus' | 'planner' | 'breath' | 'braindump';
+  variant: 'habit' | 'focus' | 'planner' | 'breath' | 'braindump' | 'breakdown';
   label?: string;
   class?: string;
 }
@@ -32,6 +32,7 @@ const addr = variant === 'focus' ? 'yks.site/tools/focus-timer'
   : variant === 'planner' ? 'yks.site/tools/weekly-planner'
   : variant === 'breath' ? 'yks.site/tools/breathing'
   : variant === 'braindump' ? 'yks.site/tools/brain-dump'
+  : variant === 'breakdown' ? 'yks.site/tools/task-breakdown'
   : 'yks.site/tools/habit-tracker';
 
 // habit grid: 1 = filled (lime), 0 = empty
@@ -159,6 +160,40 @@ const rows = [
                   fill={i === row.active ? C.ink : C.subtle} text-anchor="middle">{p}</text>
               </g>
             ))}
+          </g>
+        ))}
+      </g>
+    )}
+
+    {variant === 'breakdown' && (
+      <g>
+        <text x="36" y="92" font-family="monospace" font-size="11" letter-spacing="2" fill={C.primary}>FREE INTERACTIVE TOOL</text>
+        <text x="36" y="120" font-family="sans-serif" font-weight="700" font-size="26" fill={C.text}>Break it down</text>
+
+        <!-- progress bar -->
+        <rect x="36" y="146" width="520" height="9" rx="4.5" fill={C.card} stroke={C.border} />
+        <rect x="36" y="146" width="260" height="9" rx="4.5" fill={C.primary} />
+        <text x="600" y="156" font-family="sans-serif" font-weight="700" font-size="13" fill={C.text} text-anchor="end">50%</text>
+
+        <!-- steps with checkboxes -->
+        {[
+          { y: 184, w: 300, done: true },
+          { y: 230, w: 240, done: true },
+          { y: 276, w: 330, done: false, start: true },
+          { y: 322, w: 210, done: false },
+        ].map((row) => (
+          <g>
+            <rect x="36" y={row.y} width="568" height="34" rx="10" fill={C.card} stroke={C.border} />
+            {row.done
+              ? <g><rect x="50" y={row.y + 7} width="20" height="20" rx="6" fill={C.primary} /><path d={`M55 ${row.y + 17} l4 4 l7 -7`} stroke={C.ink} stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round" /></g>
+              : <rect x="50" y={row.y + 7} width="20" height="20" rx="6" fill={C.screen} stroke={C.border} stroke-width="2" />}
+            <rect x="82" y={row.y + 12} width={row.w} height="10" rx="5" fill={row.done ? C.screen : C.border} />
+            {row.start && (
+              <g>
+                <rect x="500" y={row.y + 8} width="78" height="18" rx="9" fill={C.primary} />
+                <text x="539" y={row.y + 20} font-family="monospace" font-size="9" letter-spacing="0.5" fill={C.ink} text-anchor="middle">START HERE</text>
+              </g>
+            )}
           </g>
         ))}
       </g>

@@ -1,0 +1,293 @@
+---
+/**
+ * Task Breakdown — free interactive "tiny steps" tool.
+ *
+ * Beats task paralysis: name the one thing that feels too big, then chop it
+ * into steps small enough that starting is easy. Checkboxes + a progress bar
+ * give the dopamine; the first-step prompt fights initiation freeze. Built for
+ * busy / neurodivergent brains. Saves to localStorage, no signup.
+ *
+ * Interactive Alpine component registered in a <script is:inline> in PLAIN JS —
+ * see the site's Alpine convention (brain-dump.astro / breathing.astro).
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Free Task Breakdown Tool',
+  applicationCategory: 'ProductivityApplication',
+  operatingSystem: 'Any (web browser)',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  description: 'A free task breakdown tool: name an overwhelming task, then split it into tiny, doable steps with a progress bar. Beats task paralysis. Saves in your browser, no signup.',
+};
+---
+
+<BaseLayout
+  title="Free Task Breakdown Tool — Beat Task Paralysis"
+  description="A free tool to break an overwhelming task into tiny, doable steps. Name the thing that feels too big, chop it down, and tick off one small step at a time. Built for ADHD & neurodivergent brains. No signup."
+  canonical="/tools/task-breakdown"
+  jsonLd={jsonLd}
+>
+  <section class="max-w-2xl mx-auto px-6 pt-12 pb-6">
+    <a href="/tools" class="font-mono text-[11px] tracking-wider text-text-subtle hover:text-primary transition-colors">← All tools</a>
+    <div class="mt-5">
+      <div class="eyebrow mb-3">Free interactive tool</div>
+      <h1 class="text-4xl md:text-5xl">Break it into tiny steps.</h1>
+      <p class="mt-3 text-text-muted max-w-xl leading-relaxed">
+        Got one task that feels too big to start? Name it, then chop it into steps
+        so small they're almost silly. Do step one — that's the whole job for now.
+        Saves in your browser.
+      </p>
+    </div>
+  </section>
+
+  <section class="max-w-2xl mx-auto px-6 pb-24" x-data="taskBreakdown" x-cloak>
+    <!-- name the task -->
+    <div x-show="!hasTask" x-cloak class="surface-card p-7 md:p-9 text-center">
+      <div class="text-3xl mb-3" aria-hidden="true">🎯</div>
+      <h2 class="font-display font-semibold text-xl tracking-tight mb-4">What feels too big right now?</h2>
+      <form @submit.prevent="setTitle()" class="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
+        <input
+          x-model="draftTitle"
+          x-ref="titleInput"
+          type="text"
+          autocomplete="off"
+          placeholder="e.g. Do my taxes, Clean the kitchen…"
+          class="flex-1 bg-bg border border-border focus:border-primary rounded-full px-5 py-3 text-base placeholder:text-text-subtle outline-none transition-colors"
+          aria-label="Name the task that feels too big"
+        />
+        <button type="submit" class="btn btn-primary px-6 whitespace-nowrap">Break it down</button>
+      </form>
+      <p class="font-mono text-[11px] tracking-wide text-text-subtle mt-4">
+        <span class="tabular-nums" x-text="completed"></span> task<span x-show="completed !== 1">s</span> finished here so far
+      </p>
+    </div>
+
+    <!-- the breakdown -->
+    <div x-show="hasTask" x-cloak>
+      <!-- task header + progress -->
+      <div class="surface-card p-6 mb-5">
+        <div class="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <div class="eyebrow mb-1.5">The task</div>
+            <h2 class="font-display font-semibold text-xl tracking-tight" x-text="title"></h2>
+          </div>
+          <button type="button" @click="startOver()" class="font-mono text-[10px] tracking-wider uppercase text-text-subtle hover:text-text transition-colors shrink-0" title="Pick a different task">New task</button>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="flex-1 h-2.5 rounded-full bg-bg overflow-hidden border border-border">
+            <div class="h-full rounded-full bg-primary transition-all duration-500" :style="`width:${progress}%`"></div>
+          </div>
+          <span class="font-display font-bold text-sm tabular-nums shrink-0" x-text="progress + '%'"></span>
+        </div>
+        <p class="font-mono text-[11px] tracking-wide text-text-subtle mt-2">
+          <span class="tabular-nums" x-text="doneCount"></span> of <span class="tabular-nums" x-text="steps.length"></span> steps
+        </p>
+      </div>
+
+      <!-- add a step -->
+      <form @submit.prevent="addStep()" class="flex gap-2 mb-3">
+        <input
+          x-model="draftStep"
+          x-ref="stepInput"
+          type="text"
+          autocomplete="off"
+          enterkeyhint="done"
+          placeholder="Add a tiny step — smaller than you think…"
+          class="flex-1 bg-bg border border-border focus:border-primary rounded-full px-5 py-3 text-sm placeholder:text-text-subtle outline-none transition-colors"
+          aria-label="Add a step"
+        />
+        <button type="submit" class="btn btn-secondary px-5 whitespace-nowrap text-sm">Add step</button>
+      </form>
+      <p x-show="steps.length === 0" x-cloak class="text-xs text-text-subtle leading-relaxed mb-3 px-1">
+        Make the <strong class="text-text">first</strong> step laughably small — under two minutes.
+        "Open the doc" counts. "Find the email" counts. Starting is the win.
+      </p>
+
+      <!-- steps -->
+      <ul class="space-y-2">
+        <template x-for="(s, idx) in steps" :key="s.id">
+          <li class="step-item surface-card" :class="s.done && 'is-done'">
+            <button type="button" class="step-check" :class="s.done && 'on'" @click="toggle(s.id)" :aria-pressed="s.done" :aria-label="s.done ? 'Mark not done' : 'Mark done'">
+              <svg x-show="s.done" x-cloak viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#0a0a0b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4 4 9.5-9.5"/></svg>
+            </button>
+            <span class="step-text" x-text="s.text"></span>
+            <span x-show="idx === 0 && !s.done" x-cloak class="step-tag">start here</span>
+            <button type="button" class="step-del" @click="removeStep(s.id)" aria-label="Remove step">✕</button>
+          </li>
+        </template>
+      </ul>
+
+      <!-- celebration -->
+      <div x-show="allDone" x-cloak class="mt-6 surface-card relative overflow-hidden p-7 text-center">
+        <div class="absolute -top-16 left-1/2 -translate-x-1/2 w-[320px] h-[160px] glow-accent pointer-events-none"></div>
+        <div class="relative">
+          <div class="text-3xl mb-2" aria-hidden="true">🎉</div>
+          <h3 class="font-display font-semibold text-xl tracking-tight mb-1">Every step done.</h3>
+          <p class="text-sm text-text-muted mb-5">That's a finished thing. Smallz is proud of you.</p>
+          <button type="button" @click="finish()" class="btn btn-primary px-7">Finish &amp; start another</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- premium hook -->
+    <div class="mt-14 surface-card relative overflow-hidden p-8 md:p-10 print:hidden">
+      <div class="absolute -top-20 right-0 w-[360px] h-[200px] glow-accent pointer-events-none"></div>
+      <div class="relative md:flex items-center justify-between gap-8">
+        <div class="max-w-lg">
+          <div class="eyebrow mb-3">Go further</div>
+          <h2 class="text-2xl md:text-3xl mb-3">When everything feels too big</h2>
+          <p class="text-text-muted leading-relaxed text-[15px]">
+            Pair this with a <a href="/tools/brain-dump" class="text-primary underline underline-offset-4">brain dump</a> to get the whole pile out of your
+            head first. For the full system — energy-aware planning and executive-function
+            shortcuts for neurodivergent minds — read the Divergent Daily Living guide.
+          </p>
+        </div>
+        <a href="/guides/divergent-daily-living-guide" class="btn btn-primary mt-5 md:mt-0 whitespace-nowrap shrink-0">Read the guide →</a>
+      </div>
+    </div>
+  </section>
+
+  <script is:inline>
+    document.addEventListener('alpine:init', () => {
+      const KEY = 'yks:taskbreakdown:v1';
+      const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+      window.Alpine.data('taskBreakdown', () => ({
+        title: '',
+        draftTitle: '',
+        steps: [],
+        draftStep: '',
+        completed: 0,
+
+        init() {
+          try {
+            const raw = localStorage.getItem(KEY);
+            if (raw) {
+              const d = JSON.parse(raw);
+              this.title = d.title || '';
+              this.steps = Array.isArray(d.steps) ? d.steps : [];
+              this.completed = d.completed || 0;
+            }
+          } catch (e) { /* ignore corrupt state */ }
+        },
+
+        get hasTask() { return this.title.trim().length > 0; },
+        get doneCount() { return this.steps.filter((s) => s.done).length; },
+        get progress() { return this.steps.length ? Math.round((this.doneCount / this.steps.length) * 100) : 0; },
+        get allDone() { return this.steps.length > 0 && this.doneCount === this.steps.length; },
+
+        setTitle() {
+          const t = this.draftTitle.trim();
+          if (!t) return;
+          this.title = t;
+          this.draftTitle = '';
+          this.persist();
+          this.$nextTick(() => this.$refs.stepInput && this.$refs.stepInput.focus());
+        },
+
+        addStep() {
+          const text = this.draftStep.trim();
+          if (!text) return;
+          this.steps.push({ id: uid(), text, done: false });
+          this.draftStep = '';
+          this.persist();
+          this.$nextTick(() => this.$refs.stepInput && this.$refs.stepInput.focus());
+        },
+
+        toggle(id) {
+          const s = this.steps.find((x) => x.id === id);
+          if (s) { s.done = !s.done; this.persist(); }
+        },
+
+        removeStep(id) {
+          this.steps = this.steps.filter((s) => s.id !== id);
+          this.persist();
+        },
+
+        finish() {
+          this.completed++;
+          this.title = '';
+          this.steps = [];
+          this.persist();
+          this.$nextTick(() => this.$refs.titleInput && this.$refs.titleInput.focus());
+          if (window.showToast) window.showToast('🎉 Nice — one finished thing. On to the next.');
+        },
+
+        startOver() {
+          this.title = '';
+          this.steps = [];
+          this.persist();
+          this.$nextTick(() => this.$refs.titleInput && this.$refs.titleInput.focus());
+        },
+
+        persist() {
+          try {
+            localStorage.setItem(KEY, JSON.stringify({
+              title: this.title, steps: this.steps, completed: this.completed,
+            }));
+          } catch (e) { /* storage may be unavailable */ }
+        },
+      }));
+    });
+  </script>
+
+  <style>
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.7rem 0.9rem;
+      border-radius: 14px;
+      animation: stepIn 0.22s ease-out;
+    }
+    .step-item.is-done { opacity: 0.6; }
+    .step-text { flex: 1 1 auto; font-size: 0.95rem; line-height: 1.4; word-break: break-word; }
+    .is-done .step-text { text-decoration: line-through; color: var(--color-text-subtle); }
+
+    .step-check {
+      width: 26px;
+      height: 26px;
+      flex-shrink: 0;
+      border-radius: 8px;
+      border: 2px solid var(--color-border);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+    .step-check:hover { border-color: var(--color-primary); }
+    .step-check.on { background: var(--color-primary); border-color: var(--color-primary); }
+
+    .step-tag {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #0a0a0b;
+      background: var(--color-primary);
+      padding: 0.2rem 0.45rem;
+      border-radius: 999px;
+      flex-shrink: 0;
+    }
+
+    .step-del {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 7px;
+      color: var(--color-text-subtle);
+      font-size: 12px;
+      transition: all 0.15s ease;
+    }
+    .step-del:hover { color: #fb7185; }
+
+    @keyframes stepIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+    @media (prefers-reduced-motion: reduce) { .step-item { animation: none; } }
+    @media print { .step-check, .step-del, .step-tag, form { display: none !important; } }
+  </style>
+</BaseLayout>
