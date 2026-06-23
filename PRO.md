@@ -64,18 +64,14 @@ Lemon Squeezy is digital-only, which is exactly right here — Pro is digital.
    > PRIVATE repo**. On a **public** repo those files are readable straight from
    > Git (and its history) by anyone, gate or no gate.
    >
-   > This site is currently on a **public** repo (the free path around Netlify's
-   > one-contributor limit on private repos — see [DEPLOY.md](DEPLOY.md)). So
-   > before you sell Pro, pick one:
-   > - **Keep the repo private** → upgrade to **Netlify Pro** (unlimited
-   >   contributors), and committing gated PDFs here is fine as written above; **or**
-   > - **Stay public/free** → do **not** commit premium PDFs. Host them in
-   >   external storage and have `pro-login.mjs` hand back a short-lived **signed
-   >   URL** instead of serving a committed file. (Ask and I'll wire this up.)
+   > **Plan: this site goes PRIVATE at go-live**, so committing gated PDFs to
+   > `public/downloads/pro/` is the intended path (see [DEPLOY.md](DEPLOY.md) for
+   > the Netlify contributor/plan implication — a private repo on the free plan
+   > only builds with a single Git contributor; more than one needs Netlify Pro).
    >
-   > Either way: **never** `git add` a real paid PDF while the repo is public.
-   > A placeholder `README.txt` is the only thing that belongs in
-   > `public/downloads/pro/` until then.
+   > Until the repo is actually flipped to private: **never** `git add` a real
+   > paid PDF. A placeholder `README.txt` is the only thing that belongs in
+   > `public/downloads/pro/` while the repo is still public.
 
 5. **Deploy.** Netlify auto-detects `netlify/functions` and `netlify/edge-functions`.
    To test locally with functions running, use `netlify dev` (not `astro dev`,

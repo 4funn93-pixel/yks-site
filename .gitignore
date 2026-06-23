@@ -17,6 +17,12 @@ pnpm-debug.log*
 .env
 .env.production
 
+# premium product files — the paid PDFs AND the scripts that contain their full
+# content live here. Never commit while the repo is public (the bytes/source
+# would be readable from Git regardless of any CDN gate). Lemon Squeezy hosts the
+# actual deliverable; this folder is just the local source of truth.
+premium/
+
 # macOS-specific files
 .DS_Store
 
