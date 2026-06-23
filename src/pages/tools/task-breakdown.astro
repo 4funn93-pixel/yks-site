@@ -71,7 +71,7 @@ const jsonLd = {
         <div class="flex items-start justify-between gap-4 mb-4">
           <div>
             <div class="eyebrow mb-1.5">The task</div>
-            <h2 class="font-display font-semibold text-xl tracking-tight" x-text="title"></h2>
+            <template x-if="hasTask"><h2 class="font-display font-semibold text-xl tracking-tight" x-text="title"></h2></template>
           </div>
           <button type="button" @click="startOver()" class="font-mono text-[10px] tracking-wider uppercase text-text-subtle hover:text-text transition-colors shrink-0" title="Pick a different task">New task</button>
         </div>

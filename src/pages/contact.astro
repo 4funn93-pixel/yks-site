@@ -24,11 +24,11 @@ import { SITE } from '../config/site';
       </p>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <input type="text" name="name" placeholder="Your name" required class="bg-bg-card border border-border focus:border-primary outline-none px-5 py-3.5 rounded-2xl transition-colors" />
-        <input type="email" name="email" placeholder="Email address" required class="bg-bg-card border border-border focus:border-primary outline-none px-5 py-3.5 rounded-2xl transition-colors" />
+        <input type="text" name="name" aria-label="Your name" placeholder="Your name" required class="bg-bg-card border border-border focus:border-primary outline-none px-5 py-3.5 rounded-2xl transition-colors" />
+        <input type="email" name="email" aria-label="Email address" placeholder="Email address" required class="bg-bg-card border border-border focus:border-primary outline-none px-5 py-3.5 rounded-2xl transition-colors" />
       </div>
 
-      <textarea name="message" rows="6" placeholder="How can we help?" required class="w-full bg-bg-card border border-border focus:border-primary outline-none px-5 py-3.5 rounded-2xl transition-colors"></textarea>
+      <textarea name="message" rows="6" aria-label="Message" placeholder="How can we help?" required class="w-full bg-bg-card border border-border focus:border-primary outline-none px-5 py-3.5 rounded-2xl transition-colors"></textarea>
 
       <button type="submit" class="btn btn-primary w-full sm:w-auto px-10 py-3.5">Send message</button>
     </form>

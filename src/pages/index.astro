@@ -65,9 +65,9 @@ const trustFacts = [
 
       <div class="mt-7 font-mono text-[11px] tracking-wider text-text-subtle flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
         <span>USE IT IN YOUR BROWSER</span>
-        <span class="text-border">/</span>
+        <span class="text-border" aria-hidden="true">/</span>
         <span>NO SIGNUP</span>
-        <span class="text-border">/</span>
+        <span class="text-border" aria-hidden="true">/</span>
         <span>SAVES YOUR PROGRESS</span>
       </div>
 
@@ -265,6 +265,7 @@ const trustFacts = [
               type="email"
               name="email"
               required
+              aria-label="Email address"
               placeholder="you@yourstudio.com"
               class="flex-1 bg-bg border border-border focus:border-primary rounded-full px-6 py-3.5 text-base placeholder:text-text-subtle outline-none transition-colors"
             />
@@ -295,7 +296,7 @@ const trustFacts = [
             <p class="text-sm text-text-muted line-clamp-3 mb-5 leading-relaxed">{post.data.description}</p>
             <div class="font-mono text-[11px] text-text-subtle flex items-center gap-2 tracking-wide">
               <span>{post.data.readingTime}</span>
-              <span class="text-border">·</span>
+              <span class="text-border" aria-hidden="true">·</span>
               <span>{post.data.publishedAt.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
             </div>
           </a>

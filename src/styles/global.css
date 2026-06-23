@@ -26,7 +26,7 @@
 
   --color-text: #f4f4f5;
   --color-text-muted: #a1a1aa;
-  --color-text-subtle: #71717a;
+  --color-text-subtle: #8a8a93; /* lightened from #71717a for WCAG-AA 4.5:1 on dark bg */
 
   /* --- Light theme overrides (.light) — warm paper --- */
   --color-bg-light: #f6f6f4;
@@ -184,7 +184,7 @@ h3, .h3 {
   font-size: 1.2rem;
 }
 
-.prose a {
+.prose a:not(.btn) {
   color: var(--color-primary);
   text-decoration: underline;
   text-underline-offset: 3px;

@@ -139,9 +139,10 @@ const description = "Browse practical guides, calendars and trackers for habits,
     >
       <!-- Search Input -->
       <div class="relative mb-6">
-        <input 
-          type="text" 
+        <input
+          type="text"
           x-model.debounce.180ms="query"
+          aria-label="Search guides"
           placeholder="Search titles, descriptions, or tags (e.g. habit, 2026, logic, budget)..."
           class="w-full bg-surface border border-border focus:border-primary text-lg px-6 py-4 rounded-2xl placeholder:text-text-subtle"
         />
@@ -173,7 +174,7 @@ const description = "Browse practical guides, calendars and trackers for habits,
         </div>
 
         <!-- Sort -->
-        <select x-model="sort" class="filter-pill text-xs bg-surface border-border cursor-pointer ml-auto md:ml-0">
+        <select x-model="sort" aria-label="Sort guides" class="filter-pill text-xs bg-surface border-border cursor-pointer ml-auto md:ml-0">
           <option value="newest">Newest first</option>
           <option value="price-low">Price: Low to High</option>
           <option value="price-high">Price: High to Low</option>
