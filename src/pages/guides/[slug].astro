@@ -175,15 +175,15 @@ const jsonLd = {
             <div class="space-y-2">
               {data.faqs.map((faq: any, idx: number) => (
                 <div class="border border-border rounded-2xl overflow-hidden bg-surface">
-                  <button 
-                    @click="open = open === idx ? null : idx"
+                  <button
+                    @click={`open = open === ${idx} ? null : ${idx}`}
                     class="faq-question w-full text-left px-6 py-4 flex justify-between items-center font-medium text-base"
-                    :aria-expanded="open === idx"
+                    :aria-expanded={`open === ${idx}`}
                   >
                     <span>{faq.question}</span>
-                    <span class="text-primary text-xl leading-none transition" :class="{ 'rotate-45': open === idx }">+</span>
+                    <span class="text-primary text-xl leading-none transition" :class={`{ 'rotate-45': open === ${idx} }`}>+</span>
                   </button>
-                  <div class="faq-answer px-6" :class="{ 'open': open === idx }">
+                  <div class="faq-answer px-6" :class={`{ 'open': open === ${idx} }`}>
                     <div class="pb-6 pt-1 text-text-muted text-[15px] leading-relaxed">{faq.answer}</div>
                   </div>
                 </div>
