@@ -1,55 +1,21 @@
 {
   "bundles": [
-  {
-    "id": "adhd-habits-starter",
-    "name": "ADHD Daily Habits Starter Pack",
-    "price": 9,
-    "original": 12,
-    "savings": 3,
-    "description": "Premium curated starter for building real consistency. Includes the premium Brain Hacking Guide + comprehensive habits guide + beautiful tracker + ADHD-friendly calendar + exclusive bonus trackers.",
-    "guides": ["ai-creator-os", "solopreneur-os", "canva-to-3d-mockups"],
-    "includes": [
-      "ADHD Daily Habits Guide (full free version with 50+ hacks)",
-      "Premium Brain Hacking Guide (the complete 90-day system)",
-      "One full ADHD-friendly 2026 monthly calendar + habit integration",
-      "Bonus brain training puzzle pages + daily focus trackers (exclusive to pack)"
-    ],
-    "results": "Users report 3+ consistent weeks of daily habits and noticeable focus improvements in the first month.",
-    "cta": "Get ADHD Daily Habits Starter Pack"
-  },
-  {
-    "id": "brain-hacking-year",
-    "name": "Brain Hacking Year Premium Pack",
-    "price": 11,
-    "original": 14,
-    "savings": 3,
-    "description": "Everything for a focused, calm, high-performing year in one premium pack. Multiple guides + exclusive trackers + calendars + brain training puzzles.",
-    "guides": ["ai-creator-os", "canva-to-3d-mockups", "annual-goals-tracker"],
-    "includes": [
-      "Complete ADHD Daily Habits Guide (free) + Premium Brain Hacking Guide system",
-      "Full 12-month ADHD-optimized 2026 Calendar pack (multiple styles)",
-      "50+ comprehensive brain hacking printable puzzles + trackers",
-      "Quarterly brain optimization reviews + 100+ tips & tricks workbooks (pack exclusive)"
-    ],
-    "results": "Perfect for ADHD adults and high-performers who want one comprehensive, brain-friendly system for the whole year.",
-    "cta": "Get Brain Hacking Year Premium Pack"
-  },
-  {
-    "id": "focus-puzzle-boost",
-    "name": "Focus & Brain Training Puzzle Pack",
-    "price": 8,
-    "original": 11,
-    "savings": 3,
-    "description": "Fun + powerful premium pack. 50+ brain hacking puzzles + comprehensive guides on using them for focus, ADHD management, and daily habits + matching trackers and answer keys.",
-    "guides": ["3d-print-photography-playbook", "godot-solo-dev-empire"],
-    "includes": [
-      "50+ printable logic, word, attention & lateral thinking brain hacking puzzles",
-      "Comprehensive Brain Hacking Guide (how to use puzzles for focus, calm, and neuroplasticity)",
-      "90-day puzzle-a-day brain optimization tracker + reward pages",
-      "Full answer keys + 100+ tips & tricks for turning puzzle time into real cognitive gains (pack exclusive)"
-    ],
-    "results": "Great for ADHD brains, focus training, commuters, or anyone who wants enjoyable screen-free brain hacking that actually improves attention and calm.",
-    "cta": "Get Focus & Brain Training Puzzle Pack"
-  }
+    {
+      "id": "divergent-essentials",
+      "name": "The Divergent Essentials Pack",
+      "price": 15,
+      "original": 20,
+      "savings": 5,
+      "checkoutUrl": "",
+      "description": "Both premium systems in one pack — a complete paper productivity OS plus the full neurodivergent daily-living guide. Buy the set once and own it forever. Every individual guide page stays free to read.",
+      "guides": ["focus-os", "divergent-daily-living-guide"],
+      "includes": [
+        "The Focus OS — complete paper productivity system (annual map, weekly reset, daily focus pages, habit trackers)",
+        "The Divergent Daily — full neurodivergent living guide (fuel, movement, sensory load, focus, rest, connection)",
+        "Print-ready PDFs, instant delivery",
+        "Lifetime updates — every future revision, free"
+      ],
+      "cta": "Get the Essentials Pack"
+    }
   ]
 }

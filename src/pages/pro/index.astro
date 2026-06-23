@@ -11,13 +11,14 @@ import { PRO, PRO_LIVE } from '../../config/pro';
 const yearlyPerMonth = Math.round((PRO.priceYearly / 12) * 100) / 100;
 
 const comparison = [
-  { feature: 'The free library (90% of everything)', free: true, pro: true },
-  { feature: 'Standard-resolution PDFs', free: true, pro: true },
+  { feature: 'The full free library + all tools', free: true, pro: true },
+  { feature: 'Free guides & printables (standard PDF)', free: true, pro: true },
   { feature: 'Interactive tools (tracker, timer…)', free: true, pro: true },
-  { feature: 'High-resolution, print-ready files', free: false, pro: true },
-  { feature: 'Editable Canva & Notion sources', free: false, pro: true },
-  { feature: 'Full extended premium guides', free: false, pro: true },
+  { feature: 'Every premium guide — and future ones', free: false, pro: true },
+  { feature: 'Editable Canva & Notion source files', free: false, pro: true },
+  { feature: 'Hi-res, print-shop-ready printables', free: false, pro: true },
   { feature: 'Exclusive Pro-only monthly drops', free: false, pro: true },
+  { feature: 'Early access to new tools & guides', free: false, pro: true },
   { feature: 'Unlimited downloads (no checkout)', free: false, pro: true },
 ];
 
@@ -52,7 +53,7 @@ const jsonLd = {
         Everything,<br /><span class="accent-text">unlocked.</span>
       </h1>
       <p class="max-w-xl mx-auto text-lg text-text-muted leading-relaxed">
-        The library stays 90% free — forever. {PRO.name} unlocks the premium 10%: high-resolution and editable files, the full guides, exclusive monthly drops, and unlimited downloads.
+        The free library and tools stay free — forever. {PRO.name} adds every premium guide (and every new one), editable + hi-res source files, exclusive monthly drops, and unlimited downloads — all in one membership.
       </p>
     </div>
   </section>
@@ -138,7 +139,10 @@ const jsonLd = {
     </div>
 
     <p class="text-center text-sm text-text-muted mt-8">
-      Not ready? <a href="/guides" class="text-primary underline underline-offset-4">The free library</a> and <a href="/tools" class="text-primary underline underline-offset-4">free tools</a> are always there, no signup.
+      Don't need everything? Buy a single <a href="/guides" class="text-primary underline underline-offset-4">premium guide</a> outright, or own the set with the <a href="/bundles" class="text-primary underline underline-offset-4">Essentials Pack</a> — both one-time, yours forever.
+    </p>
+    <p class="text-center text-sm text-text-subtle mt-3">
+      Or just keep it free: <a href="/guides" class="text-primary underline underline-offset-4">the library</a> and <a href="/tools" class="text-primary underline underline-offset-4">tools</a> need no signup, ever.
     </p>
   </section>
 </BaseLayout>
