@@ -1,0 +1,293 @@
+---
+/**
+ * Weekly Planner — free interactive block-based week planner.
+ *
+ * Deliberately NOT an overwhelming hour-by-hour grid. You add flexible "blocks"
+ * to any day (optional time + an energy tag), tick them off, and print or copy
+ * the week. Energy tags support energy-aware planning for neurodivergent brains.
+ * Saves to localStorage, no signup.
+ *
+ * Interactive Alpine component registered in a <script is:inline> in PLAIN JS —
+ * see the site's Alpine convention (brain-dump.astro / task-breakdown.astro).
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Free Weekly Planner',
+  applicationCategory: 'ProductivityApplication',
+  operatingSystem: 'Any (web browser)',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  description: 'A free, gentle weekly planner: add flexible blocks to any day with optional times and energy tags, tick them off, then print or copy your week. No signup.',
+};
+---
+
+<BaseLayout
+  title="Free Weekly Planner — Plan Your Week in Gentle Blocks"
+  description="A free weekly planner that runs in your browser. Add flexible blocks to any day with optional times and energy tags, tick them off, then print or copy your week. Gentle, no rigid hour grid. No signup."
+  canonical="/tools/weekly-planner"
+  jsonLd={jsonLd}
+>
+  <section class="max-w-6xl mx-auto px-6 pt-12 pb-6">
+    <a href="/tools" class="font-mono text-[11px] tracking-wider text-text-subtle hover:text-primary transition-colors">← All tools</a>
+    <div class="mt-5">
+      <div class="eyebrow mb-3">Free interactive tool</div>
+      <h1 class="text-4xl md:text-5xl">Plan your week in blocks.</h1>
+      <p class="mt-3 text-text-muted max-w-2xl leading-relaxed">
+        No rigid hour-by-hour grid to fall behind on. Drop flexible blocks onto any
+        day, tag each one by the energy it needs, tick them off, and print or copy
+        the week. Saves in your browser.
+      </p>
+    </div>
+  </section>
+
+  <section class="max-w-6xl mx-auto px-6 pb-24" x-data="weeklyPlanner" x-cloak>
+    <!-- add bar -->
+    <form @submit.prevent="add()" class="surface-card p-3 flex flex-wrap items-center gap-2 print:hidden">
+      <select x-model.number="addDay" class="bg-bg border border-border focus:border-primary rounded-full px-4 py-2.5 text-sm outline-none transition-colors" aria-label="Day">
+        <template x-for="(day, d) in days" :key="d">
+          <option :value="d" x-text="day + (d === today ? ' (today)' : '')"></option>
+        </template>
+      </select>
+      <input type="time" x-model="addTime" class="bg-bg border border-border focus:border-primary rounded-full px-4 py-2.5 text-sm outline-none transition-colors" aria-label="Time (optional)" />
+      <input
+        x-model="addText"
+        x-ref="planInput"
+        type="text"
+        autocomplete="off"
+        enterkeyhint="done"
+        placeholder="What's the block? e.g. Deep work, Lunch, Call mum…"
+        class="flex-1 min-w-[180px] bg-bg border border-border focus:border-primary rounded-full px-5 py-2.5 text-sm placeholder:text-text-subtle outline-none transition-colors"
+        aria-label="Block description"
+      />
+      <button type="submit" class="btn btn-primary px-6 whitespace-nowrap">Add block</button>
+    </form>
+
+    <!-- toolbar: energy legend + actions -->
+    <div class="flex flex-wrap items-center justify-between gap-3 mt-4 mb-5 print:hidden">
+      <div class="flex items-center gap-3 font-mono text-[10px] tracking-wider uppercase text-text-subtle">
+        <span>Energy:</span>
+        <template x-for="(lab, e) in energyLabels" :key="e">
+          <span x-show="e > 0" class="inline-flex items-center gap-1.5">
+            <span class="inline-block w-2.5 h-2.5 rounded-full" :style="`background:${energyColors[e]}`"></span>
+            <span x-text="lab"></span>
+          </span>
+        </template>
+        <span class="text-border">·</span>
+        <span><span class="text-primary tabular-nums" x-text="blocks.length"></span> blocks</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" @click="copyWeek()" class="share-btn text-xs" :disabled="!blocks.length">Copy week</button>
+        <button type="button" @click="clearWeek()" class="share-btn text-xs" :disabled="!blocks.length" title="Clear the whole week">Clear all</button>
+      </div>
+    </div>
+
+    <!-- the week -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
+      <template x-for="(day, d) in days" :key="d">
+        <div class="day-col surface-card" :class="d === today && 'is-today'">
+          <div class="flex items-center justify-between mb-2.5">
+            <div class="flex items-center gap-1.5">
+              <h2 class="font-display font-semibold text-sm tracking-tight" x-text="day"></h2>
+              <span x-show="d === today" class="font-mono text-[8px] tracking-wider uppercase text-primary">today</span>
+            </div>
+            <span class="font-mono text-[10px] tabular-nums text-text-subtle" x-text="dayBlocks(d).length || ''"></span>
+          </div>
+          <ul class="space-y-1.5 min-h-[40px]">
+            <template x-for="b in dayBlocks(d)" :key="b.id">
+              <li class="block-item" :class="b.done && 'is-done'">
+                <button type="button" class="energy-dot" :style="`background:${energyColors[b.energy]}`" @click="cycleEnergy(b.id)" :title="'Energy: ' + energyLabels[b.energy] + ' (tap to change)'" :aria-label="'Energy ' + energyLabels[b.energy]"></button>
+                <button type="button" class="block-body" @click="toggle(b.id)" :aria-pressed="b.done">
+                  <span x-show="b.time" class="block-time" x-text="b.time"></span>
+                  <span class="block-text" x-text="b.text"></span>
+                </button>
+                <button type="button" class="block-del print:hidden" @click="remove(b.id)" aria-label="Remove block">✕</button>
+              </li>
+            </template>
+          </ul>
+          <p x-show="!dayBlocks(d).length" x-cloak class="text-[11px] text-text-subtle italic mt-1">Open</p>
+        </div>
+      </template>
+    </div>
+
+    <!-- empty first-run hint -->
+    <p x-show="!blocks.length" x-cloak class="text-center text-sm text-text-subtle mt-8 max-w-md mx-auto leading-relaxed print:hidden">
+      Add your first block above. Plan light — a few anchored blocks beat a packed grid you abandon by Tuesday.
+    </p>
+
+    <!-- premium hook -->
+    <div class="mt-14 surface-card relative overflow-hidden p-8 md:p-10 print:hidden">
+      <div class="absolute -top-20 right-0 w-[360px] h-[200px] glow-accent pointer-events-none"></div>
+      <div class="relative md:flex items-center justify-between gap-8">
+        <div class="max-w-lg">
+          <div class="eyebrow mb-3">Go further</div>
+          <h2 class="text-2xl md:text-3xl mb-3">Plan around your energy, not against it</h2>
+          <p class="text-text-muted leading-relaxed text-[15px]">
+            Start each week with a <a href="/tools/brain-dump" class="text-primary underline underline-offset-4">brain dump</a>,
+            then drop the keepers onto the days here. The Divergent Daily Living guide
+            turns it into a sustainable rhythm built for neurodivergent minds.
+          </p>
+        </div>
+        <a href="/guides/divergent-daily-living-guide" class="btn btn-primary mt-5 md:mt-0 whitespace-nowrap shrink-0">Read the guide →</a>
+      </div>
+    </div>
+  </section>
+
+  <script is:inline>
+    document.addEventListener('alpine:init', () => {
+      const KEY = 'yks:weeklyplanner:v1';
+      const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      // JS getDay(): 0=Sun..6=Sat → map to a Monday-first index (Mon=0..Sun=6)
+      const todayIdx = () => (new Date().getDay() + 6) % 7;
+
+      window.Alpine.data('weeklyPlanner', () => ({
+        days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+        energyLabels: ['None', 'Low', 'Medium', 'High'],
+        energyColors: ['#3f3f46', '#34d399', '#fbbf24', '#fb7185'],
+        blocks: [],
+        addDay: 0,
+        addTime: '',
+        addText: '',
+        today: 0,
+
+        init() {
+          this.today = todayIdx();
+          this.addDay = this.today;
+          try {
+            const raw = localStorage.getItem(KEY);
+            if (raw) {
+              const d = JSON.parse(raw);
+              this.blocks = Array.isArray(d.blocks) ? d.blocks : [];
+            }
+          } catch (e) { /* ignore corrupt state */ }
+        },
+
+        dayBlocks(d) {
+          return this.blocks
+            .filter((b) => b.day === d)
+            .sort((a, b) => {
+              if (!a.time && !b.time) return 0;
+              if (!a.time) return 1;   // untimed blocks sink to the bottom
+              if (!b.time) return -1;
+              return a.time.localeCompare(b.time);
+            });
+        },
+
+        add() {
+          const text = this.addText.trim();
+          if (!text) return;
+          this.blocks.push({ id: uid(), day: this.addDay, time: this.addTime, text, energy: 0, done: false });
+          this.addText = '';
+          this.addTime = '';
+          this.persist();
+          this.$nextTick(() => this.$refs.planInput && this.$refs.planInput.focus());
+        },
+
+        cycleEnergy(id) {
+          const b = this.blocks.find((x) => x.id === id);
+          if (b) { b.energy = (b.energy + 1) % 4; this.persist(); }
+        },
+
+        toggle(id) {
+          const b = this.blocks.find((x) => x.id === id);
+          if (b) { b.done = !b.done; this.persist(); }
+        },
+
+        remove(id) {
+          this.blocks = this.blocks.filter((b) => b.id !== id);
+          this.persist();
+        },
+
+        clearWeek() {
+          if (!this.blocks.length) return;
+          if (window.confirm('Clear every block for the week? This can\'t be undone.')) {
+            this.blocks = [];
+            this.persist();
+          }
+        },
+
+        copyWeek() {
+          if (!this.blocks.length) return;
+          let out = 'My week\n';
+          this.days.forEach((day, d) => {
+            const items = this.dayBlocks(d);
+            if (!items.length) return;
+            out += '\n' + day + '\n';
+            items.forEach((b) => {
+              out += '  ' + (b.done ? '[x] ' : '[ ] ') + (b.time ? b.time + ' ' : '') + b.text + '\n';
+            });
+          });
+          const done = () => { if (window.showToast) window.showToast('Week copied to clipboard.'); };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(out).then(done).catch(() => {});
+          }
+        },
+
+        persist() {
+          try {
+            localStorage.setItem(KEY, JSON.stringify({ blocks: this.blocks }));
+          } catch (e) { /* storage may be unavailable */ }
+        },
+      }));
+    });
+  </script>
+
+  <style>
+    .day-col { padding: 0.9rem; display: flex; flex-direction: column; }
+    .day-col.is-today { border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border)); }
+
+    .block-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.45rem;
+      border-radius: 10px;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      animation: blockIn 0.2s ease-out;
+    }
+    .block-item.is-done { opacity: 0.55; }
+
+    .energy-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      transition: transform 0.12s ease;
+    }
+    .energy-dot:hover { transform: scale(1.25); }
+
+    .block-body {
+      flex: 1 1 auto;
+      min-width: 0;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      line-height: 1.25;
+    }
+    .block-time { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.03em; color: var(--color-primary); }
+    .block-text { font-size: 12px; word-break: break-word; }
+    .is-done .block-text { text-decoration: line-through; }
+
+    .block-del {
+      flex-shrink: 0;
+      color: var(--color-text-subtle);
+      font-size: 11px;
+      line-height: 1;
+      padding: 2px;
+      transition: color 0.15s ease;
+    }
+    .block-del:hover { color: #fb7185; }
+
+    @keyframes blockIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+    @media (prefers-reduced-motion: reduce) { .block-item { animation: none; } }
+
+    @media print {
+      .day-col { break-inside: avoid; border: 1px solid #ccc; }
+      .block-item { border: 1px solid #ddd; background: #fff; }
+      .block-text, .block-time { color: #000; }
+    }
+  </style>
+</BaseLayout>

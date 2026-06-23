@@ -110,7 +110,7 @@ const trustFacts = [
         { href: "/tools/breathing", variant: "breath", name: "Breathing", desc: "Follow a calming animated orb through Box, 4-7-8, Coherent and more. Steady your nervous system in minutes.", tag: "Live", soon: false },
         { href: "/tools/brain-dump", variant: "braindump", name: "Brain Dump", desc: "Empty your head fast, then sort each thought into Now, Next or Later. Built for busy, neurodivergent brains.", tag: "Live", soon: false },
         { href: "/tools/task-breakdown", variant: "breakdown", name: "Task Breakdown", desc: "Name the task that feels too big, chop it into tiny steps, and tick them off. Beats task paralysis.", tag: "Live", soon: false },
-        { href: "/tools", variant: "planner", name: "Weekly Planner", desc: "Time-block your week in a clean grid and export it. In the workshop — more free tools landing soon.", tag: "Soon", soon: true },
+        { href: "/tools/weekly-planner", variant: "planner", name: "Weekly Planner", desc: "Plan your week in gentle blocks with optional times and energy tags. Tick them off, print or copy. No rigid grid.", tag: "Live", soon: false },
       ].map((t, i) => (
         <a href={t.href} class={`guide-card group p-4 flex flex-col reveal ${t.soon ? 'opacity-80' : ''}`} style={`--reveal-delay:${i * 90}ms`}>
           <ToolMockup variant={t.variant as 'habit' | 'focus' | 'planner' | 'breath' | 'braindump' | 'breakdown'} label={`${t.name} preview`} class="mb-5" />
