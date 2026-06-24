@@ -4,6 +4,13 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # Build only needs production deps (astro + integrations live in
+  # "dependencies"). Skip devDependencies so the QA tools — pa11y/lighthouse
+  # and their ~hundreds-of-MB Puppeteer Chromium download — are NOT installed
+  # on every Netlify build. Keeps builds fast and conserves free build minutes.
+  NPM_FLAGS = "--omit=dev"
+  # Belt-and-suspenders: even if a dev dep slips in, never download Chromium.
+  PUPPETEER_SKIP_DOWNLOAD = "true"
 
 # Serverless functions for YKS Pro (license validation + logout).
 # Edge gating paths are declared in-file via `export const config` in
