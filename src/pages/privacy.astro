@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../config/site';
 ---
 
 <BaseLayout title="Privacy Policy — YKS" description="How we handle your data. Short, clear, and respectful." canonical="/privacy" noindex={false}>
@@ -13,6 +14,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
     <p>We do not sell data. We do not use creepy tracking. Plausible analytics is cookieless.</p>
 
-    <p>For full details or data deletion requests, email hello@yks.example.</p>
+    <p>For full details or data deletion requests, email {SITE.email}.</p>
   </div>
 </BaseLayout>
