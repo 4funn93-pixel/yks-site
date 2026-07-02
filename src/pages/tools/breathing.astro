@@ -10,6 +10,7 @@
  * (no TS) — see the site's Alpine convention (focus-timer.astro / habit-tracker).
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import FeedbackWidget from '../../components/FeedbackWidget.astro';
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -412,4 +413,10 @@ const jsonLd = {
       /* orb still scales (it's the whole point), but instantly settle ambient motion */
     }
   </style>
+  <FeedbackWidget
+    item="tool:breathing"
+    question="You've given this tool a spin — is it actually useful?"
+    trigger="interact"
+    wrapClass="max-w-3xl mx-auto px-6 pb-20"
+  />
 </BaseLayout>

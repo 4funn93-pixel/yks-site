@@ -17,7 +17,29 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <noscript>
       <p class="text-text-muted">Search needs JavaScript enabled. You can also <a href="/guides" class="text-primary underline">browse the library</a>.</p>
     </noscript>
+
+    <!-- Dead-end rescue: turn "no results" into a content-ideas pipeline -->
+    <div class="mt-12 surface-card p-6 flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <div class="eyebrow mb-1.5">Not finding it?</div>
+        <p class="text-sm text-text-muted m-0 max-w-md">If we haven't made it yet, tell us. Requests directly shape what gets added to the free library.</p>
+      </div>
+      <a id="request-printable" href="/contact?request=" class="btn btn-secondary px-6 py-3 shrink-0">Request a printable →</a>
+    </div>
   </section>
+
+  <script is:inline>
+    // Carry whatever they searched for into the contact form prefill.
+    (function () {
+      var link = document.getElementById('request-printable');
+      if (!link) return;
+      link.addEventListener('click', function () {
+        var input = document.querySelector('#search input[type="text"]');
+        var q = input && input.value ? input.value.trim() : '';
+        link.href = '/contact?request=' + encodeURIComponent(q);
+      });
+    })();
+  </script>
 
   <!-- Pagefind UI bundle (generated at build into /pagefind). Loaded only on this page. -->
   <link rel="stylesheet" href="/pagefind/pagefind-ui.css" />

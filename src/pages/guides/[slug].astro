@@ -5,6 +5,7 @@
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import LemonBuyButton from '../../components/LemonBuyButton.astro';
+import FeedbackWidget from '../../components/FeedbackWidget.astro';
 import FreeDownloadButton from '../../components/FreeDownloadButton.astro';
 import GuideIncludes from '../../components/GuideIncludes.astro';
 import { getCollection, render } from 'astro:content';
@@ -190,6 +191,16 @@ const jsonLd = {
               ))}
             </div>
           </div>
+        )}
+
+        <!-- Post-download feedback (only free guides with a PDF; hidden until the visitor downloads) -->
+        {isFree && data.pdfFilename && (
+          <FeedbackWidget
+            item={`guide:${data.slug}`}
+            question="You downloaded this one — did it actually help?"
+            trigger="download"
+            wrapClass="mt-12"
+          />
         )}
 
         <!-- Share -->

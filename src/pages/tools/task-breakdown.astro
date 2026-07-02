@@ -11,6 +11,7 @@
  * see the site's Alpine convention (brain-dump.astro / breathing.astro).
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import FeedbackWidget from '../../components/FeedbackWidget.astro';
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -290,4 +291,10 @@ const jsonLd = {
     @media (prefers-reduced-motion: reduce) { .step-item { animation: none; } }
     @media print { .step-check, .step-del, .step-tag, form { display: none !important; } }
   </style>
+  <FeedbackWidget
+    item="tool:task-breakdown"
+    question="You've given this tool a spin — is it actually useful?"
+    trigger="interact"
+    wrapClass="max-w-2xl mx-auto px-6 pb-20"
+  />
 </BaseLayout>

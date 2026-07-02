@@ -1,0 +1,209 @@
+---
+/**
+ * FeedbackWidget — thumbs up/down for guides and tools.
+ *
+ * Stays hidden until the visitor has actually engaged:
+ *   trigger="download" — reveals after they click a PDF download link
+ *   trigger="interact" — reveals after a few real interactions with the page
+ *                        (clicks/changes on buttons & inputs inside <main>)
+ * The trigger sets a localStorage flag, so the widget also shows on return
+ * visits. One vote per item per browser. A thumbs-down reveals an optional
+ * "what was missing?" box. A thumbs-up nudges toward the weekly email.
+ *
+ * Votes are stored as Netlify Form submissions (form "feedback", one shared
+ * form for the whole site — the `item` field says what was rated, e.g.
+ * "guide:weekly-reset" or "tool:focus-timer"). The hidden static form below
+ * is what Netlify's build-time parser detects; the widget submits via fetch.
+ */
+export interface Props {
+  /** What is being rated, e.g. "guide:weekly-reset" or "tool:focus-timer" */
+  item: string;
+  question?: string;
+  trigger?: 'download' | 'interact';
+  /** Classes for the outer <section> (page-width wrapper on tool pages, margin on guides) */
+  wrapClass?: string;
+}
+
+const {
+  item,
+  question = 'Did this actually help?',
+  trigger = 'download',
+  wrapClass = '',
+} = Astro.props;
+---
+
+<!-- Static form definition for Netlify's build-time detection. Never shown. -->
+<form
+  name="feedback"
+  method="POST"
+  data-netlify="true"
+  data-netlify-honeypot="bot-field"
+  hidden
+  aria-hidden="true"
+>
+  <input type="hidden" name="form-name" value="feedback" />
+  <input name="bot-field" />
+  <input name="item" />
+  <input name="vote" />
+  <textarea name="comment"></textarea>
+</form>
+
+<section id="feedback-widget" class={wrapClass} hidden aria-label="Feedback">
+  <div class="surface-card p-6 sm:p-7">
+    <!-- Step 1: the question -->
+    <div data-fb-step="vote">
+      <div class="eyebrow mb-2">Feedback</div>
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <p class="font-medium text-base m-0">{question}</p>
+        <div class="flex gap-2 shrink-0" role="group" aria-label="Rate this">
+          <button type="button" data-fb-vote="up" class="btn btn-secondary px-5 py-2.5" aria-label="Yes, this helped">
+            <span aria-hidden="true">👍</span> Yes
+          </button>
+          <button type="button" data-fb-vote="down" class="btn btn-secondary px-5 py-2.5" aria-label="No, this didn't help">
+            <span aria-hidden="true">👎</span> Not really
+          </button>
+        </div>
+      </div>
+      <p class="text-[11px] text-text-subtle mt-3 mb-0">Anonymous, one click. No account, no tracking beyond the vote.</p>
+    </div>
+
+    <!-- Step 2 (thumbs-down only): optional comment -->
+    <div data-fb-step="comment" hidden>
+      <div class="eyebrow mb-2">Thanks for being honest</div>
+      <label for="fb-comment" class="block text-sm text-text-muted mb-3">What was missing, or what would have made it work for you? (optional)</label>
+      <textarea
+        id="fb-comment"
+        rows="3"
+        maxlength="1000"
+        placeholder="e.g. too many steps, layout hard to scan, wanted an A4 version…"
+        class="w-full bg-bg-card border border-border focus:border-primary outline-none px-4 py-3 rounded-2xl transition-colors text-sm"
+      ></textarea>
+      <div class="flex gap-2 mt-3">
+        <button type="button" data-fb-send-comment class="btn btn-primary px-6 py-2.5">Send</button>
+        <button type="button" data-fb-skip-comment class="btn btn-ghost px-4 py-2.5">Skip</button>
+      </div>
+    </div>
+
+    <!-- Step 3: thanks (aria-live so screen readers announce the state change) -->
+    <div data-fb-step="thanks" hidden aria-live="polite">
+      <div class="eyebrow mb-2">Feedback received</div>
+      <p data-fb-thanks-up class="text-sm text-text-muted m-0" hidden>
+        Glad it helped. New printables & tools ship regularly — <a href="/#lead-magnet" class="text-primary underline underline-offset-4">get them in the free weekly email →</a>
+      </p>
+      <p data-fb-thanks-down class="text-sm text-text-muted m-0" hidden>
+        Thank you — honest feedback is how the free library gets better.
+      </p>
+    </div>
+  </div>
+</section>
+
+<script is:inline define:vars={{ item, trigger }}>
+  (function () {
+    var SEEN_KEY = 'yks-fb-seen:' + item;
+    var VOTE_KEY = 'yks-fb:' + item;
+
+    // localStorage can throw (private mode / blocked storage) — degrade to no-op.
+    function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+    function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } }
+
+    var widget = document.getElementById('feedback-widget');
+    if (!widget) return;
+
+    var steps = {
+      vote: widget.querySelector('[data-fb-step="vote"]'),
+      comment: widget.querySelector('[data-fb-step="comment"]'),
+      thanks: widget.querySelector('[data-fb-step="thanks"]'),
+    };
+
+    function showStep(name) {
+      for (var key in steps) steps[key].hidden = key !== name;
+    }
+
+    function showThanks(vote) {
+      widget.querySelector('[data-fb-thanks-up]').hidden = vote !== 'up';
+      widget.querySelector('[data-fb-thanks-down]').hidden = vote === 'up';
+      showStep('thanks');
+    }
+
+    // Fire-and-forget Netlify form submission. Feedback is non-critical:
+    // never block or error the UI on network failure.
+    function submit(fields) {
+      var body = new URLSearchParams();
+      body.append('form-name', 'feedback');
+      body.append('item', item);
+      for (var key in fields) body.append(key, fields[key]);
+      fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString(),
+      }).catch(function () { /* ignore — vote still recorded locally */ });
+    }
+
+    function reveal() { widget.hidden = false; }
+
+    function markSeen() {
+      lsSet(SEEN_KEY, new Date().toISOString());
+      if (!lsGet(VOTE_KEY)) reveal();
+    }
+
+    // Returning visitor who already voted: show the thanks state, not the buttons.
+    var priorVote = lsGet(VOTE_KEY);
+    if (priorVote) {
+      showThanks(priorVote === 'down-comment' ? 'down' : priorVote);
+      reveal();
+    } else if (lsGet(SEEN_KEY)) {
+      // Engaged on a previous visit but hasn't voted yet.
+      reveal();
+    }
+
+    // Engagement triggers — delegated from document because this inline script
+    // runs mid-parse, before later parts of the page exist in the DOM.
+    if (trigger === 'download') {
+      document.addEventListener('click', function (e) {
+        var link = e.target && e.target.closest ? e.target.closest('a[download]') : null;
+        if (link) markSeen();
+      });
+    } else {
+      // "interact": a few real clicks/changes on controls inside <main> —
+      // enough to mean they've actually tried the tool, not just landed on it.
+      var interactions = 0;
+      var NEEDED = 3;
+      var onInteract = function (e) {
+        var el = e.target && e.target.closest ? e.target.closest('button, input, select, textarea, [role="button"]') : null;
+        if (!el || !el.closest('main') || widget.contains(el)) return;
+        interactions++;
+        if (interactions >= NEEDED) markSeen();
+      };
+      document.addEventListener('click', onInteract);
+      document.addEventListener('change', onInteract);
+    }
+
+    widget.querySelectorAll('[data-fb-vote]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var vote = btn.getAttribute('data-fb-vote');
+        lsSet(VOTE_KEY, vote);
+        submit({ vote: vote });
+        if (vote === 'down') {
+          showStep('comment');
+          var box = document.getElementById('fb-comment');
+          if (box) box.focus();
+        } else {
+          showThanks('up');
+        }
+      });
+    });
+
+    var sendBtn = widget.querySelector('[data-fb-send-comment]');
+    if (sendBtn) sendBtn.addEventListener('click', function () {
+      var box = document.getElementById('fb-comment');
+      var text = box && box.value ? box.value.trim() : '';
+      if (text) submit({ vote: 'down-comment', comment: text.slice(0, 1000) });
+      showThanks('down');
+    });
+
+    var skipBtn = widget.querySelector('[data-fb-skip-comment]');
+    if (skipBtn) skipBtn.addEventListener('click', function () {
+      showThanks('down');
+    });
+  })();
+</script>

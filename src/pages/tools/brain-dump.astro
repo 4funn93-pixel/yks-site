@@ -11,6 +11,7 @@
  * see the site's Alpine convention (breathing.astro / focus-timer.astro).
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import FeedbackWidget from '../../components/FeedbackWidget.astro';
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -302,4 +303,10 @@ const jsonLd = {
       .dump-col { break-inside: avoid; border: 1px solid #ccc; }
     }
   </style>
+  <FeedbackWidget
+    item="tool:brain-dump"
+    question="You've given this tool a spin — is it actually useful?"
+    trigger="interact"
+    wrapClass="max-w-3xl mx-auto px-6 pb-20"
+  />
 </BaseLayout>

@@ -6,6 +6,7 @@
  * Powered by Alpine.js, matching the site's zero-heavy-JS approach.
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import FeedbackWidget from '../../components/FeedbackWidget.astro';
 import Mascot from '../../components/Mascot.astro';
 
 // Starter suggestions shown in the empty state (one tap to add).
@@ -321,6 +322,12 @@ const jsonLd = {
       .cell, .cell:hover, .cell:active { transition: none; transform: none; }
     }
   </style>
+  <FeedbackWidget
+    item="tool:habit-tracker"
+    question="You've given this tool a spin — is it actually useful?"
+    trigger="interact"
+    wrapClass="max-w-5xl mx-auto px-6 pb-20"
+  />
 </BaseLayout>
 </content>
 </invoke>

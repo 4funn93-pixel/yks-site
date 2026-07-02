@@ -35,4 +35,20 @@ import { SITE } from '../config/site';
 
     <div class="mt-10 text-xs text-text-subtle">For premium-pack order issues, check your email receipt or reply directly to the delivery email.</div>
   </div>
+
+  <script is:inline>
+    // Prefill the message when arriving from a "Request a printable" link
+    // (search page carries the query along: /contact?request=<searched term>).
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      if (!params.has('request')) return;
+      var box = document.querySelector('form[name="contact"] textarea[name="message"]');
+      if (!box || box.value) return;
+      var topic = (params.get('request') || '').trim().slice(0, 200);
+      box.value = topic
+        ? 'Printable request: ' + topic + '\n\nWhat I’m looking for: '
+        : 'Printable request: \n\nWhat I’m looking for: ';
+      box.focus();
+    })();
+  </script>
 </BaseLayout>

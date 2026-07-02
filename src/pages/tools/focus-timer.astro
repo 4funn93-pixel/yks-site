@@ -6,6 +6,7 @@
  * Alpine.js, zero heavy JS.
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import FeedbackWidget from '../../components/FeedbackWidget.astro';
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -225,5 +226,11 @@ const jsonLd = {
       }));
     });
   </script>
+  <FeedbackWidget
+    item="tool:focus-timer"
+    question="You've given this tool a spin — is it actually useful?"
+    trigger="interact"
+    wrapClass="max-w-3xl mx-auto px-6 pb-20"
+  />
 </BaseLayout>
 </content>
